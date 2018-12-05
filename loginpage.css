@@ -2,6 +2,7 @@ body {
     background: #FAFAFA;
     padding: 0; margin: 0;
     font-family: 'Roboto', sans-serif;
+    position: relative;
 }
 
 #bb-logo {
@@ -22,6 +23,11 @@ body {
     padding: 16px;
     margin: auto;
     width: 300px;
+
+    /* Center vertically */
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .textfield {
