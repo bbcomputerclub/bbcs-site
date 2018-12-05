@@ -40,7 +40,7 @@ body {
 }
 
 .button {
-    border: 0;
+    border: 2px solid transparent;
     border-radius: 2px;
     padding: 8px;
     background: #26428b;
@@ -50,5 +50,5 @@ body {
 }
 
 .button:focus {
-    border: 1px solid #3761cc;
+    border: 2px solid #3761cc;
 }
