@@ -36,13 +36,18 @@ body {
 }
 
 .textfield:focus {
-    border-bottom: 2px solid #26428b;
+    border-bottom: 2px solid #3761cc;
 }
 
 .button {
     border: 0;
     border-radius: 2px;
     padding: 8px;
-    background: #26428b;
+    background: #3761cc;
     color: #FFF;
+    outline: 0;
+}
+
+.button:active, .button:focus {
+    background: #26428b;
 }
