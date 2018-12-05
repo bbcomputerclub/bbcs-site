@@ -1,0 +1,52 @@
+body {
+    background-color: #26428b;
+    /* Sets the background color */
+}
+.BBLogo {
+    text-align: left;
+    margin: 0;
+    -ms-transform: translate(10%, 0%);
+    transform: translate(10%, 0%);
+    height: 120px;
+    width: 120px;
+    /* Positions the image of the Blind Brook Logo to be in the top left corner */
+}
+.title {
+    margin: 0;
+    -ms-transform: translate(0%, -50%);
+    transform: translate(0%, -50%);
+    font-family: 'Alegreya Sans SC';
+    font-size: 50px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+    /* Styles the heading which says "Online Time Verification Form */
+}
+input[type=text] {
+    height: 30px;
+    width: 300px;
+    border-radius: 7px;
+    border: 1px solid black;
+    -ms-transform: translate(0%, -21%);
+    transform: translate(0%, -21%);
+}
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: black;
+    text-indent: 10px;
+    opacity: 1; /* Firefox */
+    
+    /* Styles the placeholder texts for the email address and password textbox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: black;
+    text-indent: 10px;
+    
+    /* Styles the placeholder texts for the email address and password textbox */
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+    color: black;
+    text-indent: 10px;
+    /* Styles the placeholder texts for the email address and password textbox */
+}
