@@ -8,15 +8,14 @@
     </head>
     <body>
         <div class="title">
-            <img id="bb-logo" src="https://www.blindbrook.org/cms/lib/NY01913277/Centricity/Template/8/logos/_logo.png" width="32" height="32">
-            <h1>[Entry name]</h1>
+            <h1><input type="text" placeholder="Name" required></h1>
         </div>
         <div class="textfieldPosition">
+            <input class="textfield" type="number" placeholder="Hours" required />
+            <input class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" />
             <input class="textfield" type="text" placeholder="Service Organization" />
-            <textarea class="textfield" placeholder="Description"></textarea>
             <input class="textfield" type="email" placeholder="Contact Person" />
             <input class="textfield" type="email" placeholder="Contact Email" />
-            <input class="textfield" type="number" placeholder="Hours" />            
         </div>
     </body>
 </html>
