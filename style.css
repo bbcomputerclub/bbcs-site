@@ -4,15 +4,16 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
-#bb-logo {
-    float:left;
-}
-
 .title {
-    padding: 8px;
+    padding: 16px 72px;
     padding-left: 16px;
     background: #26428b;
     color: #FFF;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+main {
+    padding: 16px 72px;
 }
 
 h1 {
