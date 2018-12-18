@@ -10,8 +10,9 @@ body {
 
 .title {
     padding: 8px;
+    padding-left: 16px;
     background: #26428b;
-    color: #FFF;   
+    color: #FFF;
 }
 
 .title h1 {
@@ -20,8 +21,6 @@ body {
 
 .textfieldPosition {
     padding: 16px;
-    margin: auto;
-    width: 300px;
 
     /* Center vertically */
     margin-top: 10%;
