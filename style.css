@@ -15,16 +15,27 @@ body {
     color: #FFF;
 }
 
-.title h1 {
+h1 {
     font-size: 16px;
+    font-weight: bold;
 }
 
-.textfieldPosition {}
+.card {
+    padding: 16px;
+    border-radius: 2px;
+    background: #FFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    
+    margin-top: 10%;
+}
+    .card h1 {
+        text-align: center;
+    }
 
 .textfield {
     outline: 0;
     border: 0;
-    background: #fff;
+    background: transparent;
     padding: 16px;
     border-bottom: 2px solid #AAA;
     font-size: 14px;
@@ -34,22 +45,21 @@ body {
     width: -moz-available;
     width: -webkit-fill-available;
     width: fill-available;
+    margin-bottom: 8px;
 }
-
-.textfield:focus {
-    border-bottom: 2px solid #26428b;
-}
+    .textfield:focus {
+        border-bottom: 2px solid #26428b;
+    }
 
 .button {
     border: 4px solid transparent;
     border-radius: 2px;
-    padding: 8px;
+    padding: 8px 16px;
     background: #26428b;
     color: #FFF;
     outline: 0;
     cursor: pointer;
 }
-
-.button:focus {
-    border: 4px solid #3761cc;
-}
+    .button:focus {
+        border: 4px solid #3761cc;
+    }
