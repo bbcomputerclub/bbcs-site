@@ -19,23 +19,21 @@ body {
     font-size: 16px;
 }
 
-.textfieldPosition {
-    padding: 16px;
-
-    /* Center vertically */
-    margin-top: 10%;
-}
+.textfieldPosition {}
 
 .textfield {
     outline: 0;
     border: 0;
     background: transparent;
-    padding: 8px;
+    padding: 16px;
     border-bottom: 2px solid #AAA;
     font-size: 14px;
+
     display: block;
-    margin-bottom: 8px;
     width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: fill-available;
 }
 
 .textfield:focus {
