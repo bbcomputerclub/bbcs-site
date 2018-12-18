@@ -6,7 +6,6 @@ body {
 
 .title {
     padding: 16px 72px;
-    padding-left: 16px;
     background: #26428b;
     color: #FFF;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -48,8 +47,11 @@ h1 {
     width: -moz-available;
     width: -webkit-fill-available;
     width: fill-available;
-    margin-bottom: 8px;
 }
+    .textfield.dark {
+        color: #FFF;
+        border-bottom: 2px solid #FFF;
+    }
     .textfield:focus {
         border-bottom: 2px solid #26428b;
     }
