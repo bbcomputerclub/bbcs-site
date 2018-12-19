@@ -8,6 +8,7 @@ import (
 	"os"
 	"mime"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -36,6 +37,8 @@ func main() {
 		for key, _ := range values {
 			resp = strings.Replace(resp, "[[" + key + "]]", values.Get(key), -1)
 		}
+
+		resp = strings.Replace(resp, "[[*today]]", time.Now().Format("2006-01-02"), -1)
 	
 		w.WriteHeader(200)		
 		w.Write([]byte(resp))
