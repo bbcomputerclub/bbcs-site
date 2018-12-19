@@ -18,6 +18,14 @@ body {
 	.title a:hover {
 		border-bottom: 2px solid;
 	}
+	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
+		margin: 0;
+	}
+	.title .textfield {
+		padding: 0;
+		/* Compensate for border */
+		margin-bottom: -2px;
+	}
 
 .list {
 	padding: 0;
@@ -74,7 +82,7 @@ h1 {
     background: transparent;
     padding: 8px 16px;
     border-bottom: 2px solid #AAA;
-    font-size: 14px;
+    font: inherit;
 
     display: block;
     width: 100%;
