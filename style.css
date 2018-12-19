@@ -10,6 +10,40 @@ body {
     color: #FFF;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+	.title a, .title span {
+		color: #FFF;
+		text-decoration: none;
+		margin-left: 8px;
+	}
+	.title a:hover {
+		border-bottom: 2px solid;
+	}
+
+.list {
+	padding: 0;
+	margin: 0;
+}
+	.list > li {
+		list-style-type: none;
+		padding: 8px 72px;
+		margin: 0;
+	}
+	.list.linked li {
+		padding: 0;
+	}
+	.list.linked li a {
+		text-decoration: none;
+		padding: 8px 72px;		
+		display: block;
+		color: inherit;
+		outline: 0;
+	}
+	.list.linked li a:hover, .list.linked li a:focus {
+		background: rgba(0,0,0,0.1);
+	}
+	.list.linked li a:active {
+		background: rgba(0,0,0,0.2);
+	}
 
 main {
     padding: 16px 72px;
