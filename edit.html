@@ -8,16 +8,16 @@
     </head>
     <body>
         <div class="title">
-            <h1 style="margin:0"><input type="text" placeholder="Name" class="textfield dark" value="Work at Soup Kitchen" required></h1>
+            <h1 style="margin:0"><input type="text" placeholder="Name" class="textfield dark" value="[[name]]" required></h1>
         </div>
         <main>
             <div style="display:flex">
-                <input class="textfield" type="number" min="1" placeholder="Hours" required style="margin-right: 16px" value="2" />
+                <input class="textfield" type="number" min="1" placeholder="Hours" required style="margin-right: 16px" value="[[hours]]" />
                 <input class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="2018-12-18" />
             </div>
-            <input class="textfield" type="text" placeholder="Service Organization" value="Bob's Soup Kitchen" />
-            <input class="textfield" type="text" placeholder="Contact Person" value="Bob" />
-            <input class="textfield" type="email" placeholder="Contact Email" value="bob@example.org" />
+            <input class="textfield" type="text" placeholder="Service Organization" value="[[org]]" />
+            <input class="textfield" type="text" placeholder="Contact Person" value="[[person]]" />
+            <input class="textfield" type="email" placeholder="Contact Email" value="[[email]]" />
         </main>
     </body>
 </html>
