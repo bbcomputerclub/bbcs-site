@@ -57,7 +57,7 @@ h1 {
         border-bottom: 2px solid #fff;
     }
     .textfield:focus {
-        border-bottom: 2px solid #26428b;
+        border-bottom: 2px solid #26428b !important;
     }
     .textfield:invalid {
     	border-bottom: 2px solid #f44336;
