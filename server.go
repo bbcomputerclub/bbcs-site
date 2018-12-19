@@ -8,6 +8,7 @@ import (
 	"os"
 	"mime"
 	"strings"
+	"regexp"
 	"time"
 )
 
@@ -39,6 +40,7 @@ func main() {
 		}
 
 		resp = strings.Replace(resp, "[[*today]]", time.Now().Format("2006-01-02"), -1)
+		resp = regexp.MustCompile("\\[\\[.*\\]\\]").ReplaceAllString(resp, "")
 	
 		w.WriteHeader(200)		
 		w.Write([]byte(resp))
