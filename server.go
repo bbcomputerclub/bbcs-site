@@ -30,8 +30,15 @@ func main() {
 			ext := r.URL.Path[i:]
 			w.Header().Set("Content-Type", mime.TypeByExtension(ext))
 		}
-		w.Write(bytes)
-		w.WriteHeader(200)
+
+		resp := string(bytes)
+		values := r.URL.Query()
+		for key, _ := range values {
+			resp = strings.Replace(resp, "[[" + key + "]]", values.Get(key), -1)
+		}
+	
+		w.WriteHeader(200)		
+		w.Write([]byte(resp))
 	})
 	http.ListenAndServe(":8080", nil)
 }
