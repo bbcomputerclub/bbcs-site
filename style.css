@@ -120,3 +120,18 @@ h1 {
     .button:focus {
         border: 4px solid #3761cc;
     }
+
+@media (max-width: 599px) {
+	.title {
+		padding: 16px;
+	}
+	main {
+		padding: 16px;
+	}
+	.list > li {
+		padding: 8px 16px;
+	}
+	.list.linked li a {
+		padding: 8px 16px;
+	}
+}
