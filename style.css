@@ -1,0 +1,137 @@
+body {
+    background: #FFF;
+    padding: 0; margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+.title {
+    padding: 16px 72px;
+    background: #26428b;
+    color: #FFF;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+	.title a, .title span {
+		color: #FFF;
+		text-decoration: none;
+		margin-left: 8px;
+	}
+	.title a:hover {
+		border-bottom: 2px solid;
+	}
+	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
+		margin: 0;
+	}
+	.title .textfield {
+		padding: 0;
+		/* Compensate for border */
+		margin-bottom: -2px;
+	}
+
+.list {
+	padding: 0;
+	margin: 0;
+}
+	.list > li {
+		list-style-type: none;
+		padding: 8px 72px;
+		margin: 0;
+	}
+	.list.linked li {
+		padding: 0;
+	}
+	.list.linked li a {
+		text-decoration: none;
+		padding: 8px 72px;		
+		display: block;
+		color: inherit;
+		outline: 0;
+	}
+	.list.linked li a:hover, .list.linked li a:focus {
+		background: rgba(0,0,0,0.1);
+	}
+	.list.linked li a:active {
+		background: rgba(0,0,0,0.2);
+	}
+
+main {
+    padding: 16px 72px;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.card {
+    padding: 16px;
+    border-radius: 2px;
+    background: #FFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
+    max-width: 300px;
+    margin: auto;
+    margin-top: 10%;
+}
+    .card h1 {
+        text-align: center;
+    }
+
+.textfield {
+    outline: 0;
+    border: 0;
+    background: transparent;
+    padding: 8px 16px;
+    border-bottom: 2px solid #AAA;
+    font: inherit;
+
+    display: block;
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: fill-available;
+}
+    .textfield.dark {
+        color: #FFF;
+        border-bottom: 2px solid transparent;
+    }
+    .textfield.dark:focus {
+        color: #FFF;
+        border-bottom: 2px solid #fff;
+    }
+    .textfield:invalid {
+    	border-bottom: 2px solid #f44336;
+    	outline: 0;
+    	box-shadow: none;
+    }
+    .textfield:focus {
+        border-bottom: 2px solid #26428b;
+    }
+ 
+
+.button {
+    border: 4px solid transparent;
+    border-radius: 2px;
+    padding: 8px 16px;
+    background: #26428b;
+    color: #FFF;
+    outline: 0;
+    cursor: pointer;
+}
+    .button:focus {
+        border: 4px solid #3761cc;
+    }
+
+@media (max-width: 599px) {
+	.title {
+		padding: 16px;
+	}
+	main {
+		padding: 16px;
+	}
+	.list > li {
+		padding: 8px 16px;
+	}
+	.list.linked li a {
+		padding: 8px 16px;
+	}
+}
