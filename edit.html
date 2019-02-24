@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Edit [[name]] - Community Service</title>
+        <title>Edit [[entry name]] - Community Service</title>
         <link rel="stylesheet" href="style.css">
         <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
         <meta name="theme-color" content="#26428b">
@@ -10,16 +10,17 @@
     	<!-- Will change to something like /submit.html that will update database & redirect to /list.html -->
     	<form action="https://youtu.be/dQw4w9WgXcQ" method="GET">
 	        <div class="title">
-	            <h1><input type="text" placeholder="Name" class="textfield dark" value="[[name]]" required></h1>
+				<h1><input type="text" placeholder="Name" class="textfield dark" value="[[entry name]]" required></h1>
 	        </div>
 	        <main>
 	            <div style="display:flex">
-	                <input class="textfield" type="number" min="1" placeholder="Hours" required style="margin-right: 16px" value="[[hours]]" />
-	                <input class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[*today]]" />
+	                <input class="textfield" type="number" min="1" placeholder="Hours" required style="margin-right: 16px" value="[[entry hours]]" />
+	                <input class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[entry date]]" />
 	            </div>
-	            <input class="textfield" type="text" placeholder="Service Organization" value="[[org]]" />
-	            <input class="textfield" type="text" placeholder="Contact Person" value="[[person]]" />
-	            <input class="textfield" type="email" placeholder="Contact Email" value="[[email]]" />
+				<input type="hidden" name="index" value="[[entry index]]">
+				<input class="textfield" type="text" placeholder="Service Organization" value="[[entry org]]" />
+	            <input class="textfield" type="text" placeholder="Contact Person" value="[[entry contact.person]]" />
+	            <input class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
 	            <button type="submit" class="button" style="margin-top:8px">Submit</button>
 	        </main>
 	   	</form>

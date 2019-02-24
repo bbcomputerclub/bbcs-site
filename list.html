@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>[[name]] - Community Service</title>
+        <title>[[user name]] - Community Service</title>
         <link rel="stylesheet" href="style.css">
         <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
         <meta name="theme-color" content="#26428b">
     </head>
     <body>
         <div class="title">
-           	<a style="float:right" href="edit.html"><b>+</b></a>        
-          	<span style="float:right">[[email]]</span>
-            <h1>[[name]]'s community service hours</h1>
+           	<a style="float:right" href="/add"><b>+</b></a>        
+          	<span style="float:right">[[user email]]</span>
+            <h1>[[user name]]'s community service hours</h1>
         </div>
         <ul class="list linked">
-			<!-- No community service entries :( -->
-			<li><a href="edit.html?name=Soup+Kitchen&hours=2&org=Blind+Brook+HS+Soup+Kitchen&email=bbhssoupkitchen@gmail.com&person=Kitchen+Representative">Soup Kitchen</a></li>
+        	[[repeat
+				<li><a href="/edit?[index]">[name]</a></li>
+			]]
         </ul>
     </body>
 </html>

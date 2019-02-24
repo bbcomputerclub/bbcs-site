@@ -26,9 +26,7 @@ body {
 
         <script>
 function onSignIn(user) {
-	// TODO
-	var profile = user.getBasicProfile();
-	location.href = "list.html?name=" + encodeURI(profile.getGivenName()) + "&email=" + profile.getEmail();
+	location.href = "list?" + user.getAuthResponse().id_token;
 }
         </script>
     </body>
