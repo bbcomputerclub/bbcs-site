@@ -19,7 +19,7 @@ body {
 		border-bottom: 2px solid;
 	}
 	.title .button {
-		padding: 0 4px;
+		padding: 0 8px;
 		margin-top: -2px;
 	}
 	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
@@ -136,6 +136,11 @@ h1 {
 	.button.light:focus {
 		border-color: #37ACCC;
 	}
+.button.strong {
+	background: #ff9800; }
+	.button.strong:focus {
+		border-color: #f57c00; }
+
 
 @media (max-width: 599px) {
 	.title {
