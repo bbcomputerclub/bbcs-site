@@ -84,7 +84,7 @@ func process(in []byte, query url.Values) []byte {
 			html := strings.Trim(code[6:], " \t\n")
 			out := ""
 			for i, entry := range DBList(user.Email) {
-				out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", query.Get("token")).Replace(html)
+				out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", query.Get("token"), "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
 			}
 			return []byte(out)
 		default:
@@ -95,6 +95,11 @@ func process(in []byte, query url.Values) []byte {
 
 func main() {
 	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			w.WriteHeader(404)
+			return
+		}
+	
 		body, err := ioutil.ReadFile("login.html")
 		if err != nil {
 			w.WriteHeader(500)

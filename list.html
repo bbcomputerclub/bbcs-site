@@ -4,18 +4,18 @@
         <title>[[user name]] - Community Service</title>
         <link rel="stylesheet" href="style.css">
         <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-        <meta name="theme-color" content="#26428b">
+		<meta name="theme-color" content="#26428b">
     </head>
     <body>
         <div class="title">
-           	<a style="float:right" href="/add?token=[[user token]]"><b>+</b></a>        
-          	<span style="float:right">[[user email]]</span>
-            <h1>[[user name]]'s community service hours</h1>
-        </div>
-        <ul class="list linked">
-        	[[repeat
-				<li><a href="/edit?token=[token]&entry=[index]">[name]</a></li>
-			]]
-        </ul>
-    </body>
+			<a style="float:right" href="/add?token=[[user token]]" class="button light">+</a>
+			<a style="float:right" href="/#signout" class="button light">Sign out</a>
+			<span style="float:right">[[user email]]</span>
+			<h1>[[user name]]'s community service hours</h1>
+		</div>
+        <ul class="list linked">[[repeat
+				<li><a href="/edit?token=[token]&entry=[index]">[name]
+				<span style="float:right">[hours]</span></a></li>
+		]]</ul>
+   </body>
 </html>

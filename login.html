@@ -8,8 +8,8 @@
 
         <meta name="google-signin-scope" content="profile email">
         <meta name="google-signin-client_id" content="914378202067-47embpa30r40lv99kqha2c601vknc1t5.apps.googleusercontent.com">
-        <script src="https://apis.google.com/js/platform.js" async defer></script>      
-        <style>
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+		<style>
 .textfield {
 	margin-bottom: 8px;
 }
@@ -26,9 +26,14 @@ body {
 
         <script>
 function onSignIn(user) {
-	location.href = "list?token=" + user.getAuthResponse().id_token;
+	if (location.hash !== "#signout")
+		location.href = "list?token=" + user.getAuthResponse().id_token;
+	else
+		gapi.auth2.getAuthInstance().signOut().then(function() {
+			location.hash = "#";
+		});
 }
-        </script>
+		</script>
     </body>
 </html>
 

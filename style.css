@@ -15,8 +15,12 @@ body {
 		text-decoration: none;
 		margin-left: 8px;
 	}
-	.title a:hover {
+	.title a:hover:not(.button) {
 		border-bottom: 2px solid;
+	}
+	.title .button {
+		padding: 0 4px;
+		margin-top: -2px;
 	}
 	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
 		margin: 0;
@@ -51,6 +55,13 @@ body {
 	}
 	.list.linked li a:active {
 		background: rgba(0,0,0,0.2);
+	}
+	.list:empty::after {
+		display: block;
+		margin-top: 128px;
+		font-size: 24px;
+		text-align: center;
+		content: "No entries yet :(" /* TODO: Insert a quirky empty state */
 	}
 
 main {
@@ -120,6 +131,11 @@ h1 {
     .button:focus {
         border: 4px solid #3761cc;
     }
+.button.light {
+	background: #3761cc; }
+	.button.light:focus {
+		border-color: #37ACCC;
+	}
 
 @media (max-width: 599px) {
 	.title {
