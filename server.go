@@ -79,6 +79,13 @@ func process(in []byte, query url.Values) []byte {
 			if cmd[1] == "contact.email" { 
 				return []byte(entry.ContactEmail)
 			}
+			if cmd[1] == "action" {
+				if query.Get("entry")[0] == '-' {
+					return []byte("Add")
+				} else {
+					return []byte("Edit")
+				}
+			}
 			return nil
 		case "repeat":
 			html := strings.Trim(code[6:], " \t\n")
