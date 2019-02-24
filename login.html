@@ -26,7 +26,7 @@ body {
 
         <script>
 function onSignIn(user) {
-	location.href = "list?" + user.getAuthResponse().id_token;
+	location.href = "list?token=" + user.getAuthResponse().id_token;
 }
         </script>
     </body>

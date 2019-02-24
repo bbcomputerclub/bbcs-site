@@ -8,13 +8,13 @@
     </head>
     <body>
         <div class="title">
-           	<a style="float:right" href="/add"><b>+</b></a>        
+           	<a style="float:right" href="/add?token=[[user token]]"><b>+</b></a>        
           	<span style="float:right">[[user email]]</span>
             <h1>[[user name]]'s community service hours</h1>
         </div>
         <ul class="list linked">
         	[[repeat
-				<li><a href="/edit?[index]">[name]</a></li>
+				<li><a href="/edit?token=[token]&entry=[index]">[name]</a></li>
 			]]
         </ul>
     </body>
