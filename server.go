@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+	"encoding/json"
+	"errors"
 )
 
 type UserData struct {
@@ -16,16 +18,39 @@ type UserData struct {
 	Email string
 }
 
-func getUser(_ string) UserData {
-	// TODO
-	return UserData{Name: "Bob", Email: "bob@example.com"}
+func getUser(token string) (UserData, error) {
+	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)	
+	if err != nil {
+		return UserData{}, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return UserData{}, err
+	}
+
+	data := make(map[string]interface{})
+	json.Unmarshal(body, &data)
+
+	if data["error"] != nil {
+		return UserData{}, errors.New(fmt.Sprint(data["error"]))
+	}
+
+	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
+		return UserData{}, errors.New("Not blindbrook")
+	}	
+
+	return UserData{
+				Name: fmt.Sprint(data["name"]),
+				Email: fmt.Sprint(data["email"]),
+			}, nil
 }
 
-func process(in []byte, query url.Values) []byte {
+func process(in []byte, query url.Values) ([]byte, error) {
 	var re = regexp.MustCompile("(?s)\\[\\[.*?\\]\\]")
-	var user = getUser(query.Get("token"))
-	if len(user.Email) == 0 {
-		return nil
+	user, err := getUser(query.Get("token"))
+	if err != nil {
+		return nil, err
 	}
 
 	var entry DBEntry
@@ -97,7 +122,7 @@ func process(in []byte, query url.Values) []byte {
 		default:
 			return nil				
 		}
-	})	
+	}), nil
 }
 
 func main() {
@@ -134,8 +159,14 @@ func main() {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(process(body, r.URL.Query()))
+		if res, err := process(body, r.URL.Query());  err == nil {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(res)
+		} else {
+			w.Header().Set("Content-Type", "text/plain")		
+			w.WriteHeader(400)
+			fmt.Fprintln(w, err)
+		}
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 
@@ -145,8 +176,15 @@ func main() {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(process(body, r.URL.Query()))
+		
+		if res, err := process(body, r.URL.Query());  err == nil {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write(res)
+		} else {
+			w.Header().Set("Content-Type", "text/plain")		
+			w.WriteHeader(400)
+			fmt.Fprintln(w, err)
+		}
 	})
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
@@ -156,8 +194,8 @@ func main() {
 
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		user := getUser(query.Get("Token"))
-		if len(user.Email) == 0 {
+		user, err := getUser(query.Get("token"))
+		if err != nil {
 			w.WriteHeader(400)
 			return
 		}
