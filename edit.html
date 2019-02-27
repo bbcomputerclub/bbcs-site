@@ -23,6 +23,7 @@
 	            <input name="contactname" class="textfield" type="text" placeholder="Contact Person" value="[[entry contact.name]]" />
 	            <input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
 	            <button type="submit" class="button" style="margin-top:8px">Save</button>
+         	    <button type="submit" formaction="/list" class="button" style="margin-top:8px" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
 	        </main>
 	   	</form>
     </body>
