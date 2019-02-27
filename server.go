@@ -38,7 +38,7 @@ func getUser(token string) (UserData, error) {
 
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
 		return UserData{}, errors.New("Not blindbrook")
-	}	
+	}
 
 	return UserData{
 				Name: fmt.Sprint(data["name"]),
@@ -163,9 +163,8 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
-			w.Header().Set("Content-Type", "text/plain")		
-			w.WriteHeader(400)
-			fmt.Fprintln(w, err)
+			w.Header().Set("Location", "/#error:" + err.Error())
+			w.WriteHeader(302)
 		}
 	})
 
@@ -181,9 +180,8 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
-			w.Header().Set("Content-Type", "text/plain")		
-			w.WriteHeader(400)
-			fmt.Fprintln(w, err)
+			w.Header().Set("Location", "/#error:" + err.Error())
+			w.WriteHeader(302)
 		}
 	})
 

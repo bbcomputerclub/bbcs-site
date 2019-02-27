@@ -73,22 +73,34 @@ function onFailure() {
 	text.classList.add("error");
 }
 
+function showError(msg) {
+	var text = document.getElementById("text");	
+	if (msg == null) {
+		text.innerHTML = "";
+		text.classList.remove("error");		
+	} else {
+		text.innerHTML = msg;
+		text.classList.add("error");
+	}
+}
+
 function onSignIn(user) {
 	if (location.hash !== "#signout") {
-		var text = document.getElementById("text");	
 		var profile = user.getBasicProfile();
 		if (!profile.getEmail().endsWith("@blindbrook.org")) {
-			text.innerHTML = profile.getEmail() + " is not associated with Blind Brook. Try signing in with a different account.";
-			text.classList.add("error");
+			showError(profile.getEmail() + " is not associated with Blind Brook. Try signing in with a different account.");
 			signOut();
 		} else {
-			text.innerHTML = "";
-			text.classList.remove("error");
+			showError(null);
 			location.href = "list?token=" + user.getAuthResponse().id_token;
 		}
 	} else {
 		signOut();
 	}
+}
+
+if (location.hash.startsWith("#error:")) {
+	showError(location.hash.slice(7));
 }
 		</script>
         <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>		
