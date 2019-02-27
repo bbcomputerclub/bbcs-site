@@ -169,12 +169,13 @@ func main() {
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 
+		/* TODO: Need to disable after 30 days */
+	
 		body, err := ioutil.ReadFile("edit.html")
 		if err != nil {
 			w.WriteHeader(500)
 			return
 		}
-
 		
 		if res, err := process(body, r.URL.Query());  err == nil {
 			w.Header().Set("Content-Type", "text/html")
