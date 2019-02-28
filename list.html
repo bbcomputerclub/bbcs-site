@@ -8,10 +8,10 @@
     </head>
     <body>
         <div class="title">
-			<a style="float:right" href="/add?token=[[user token]]" class="button strong">Add</a>
-			<a style="float:right" href="/#signout" class="button light">Sign out</a>
-			<span style="float:right">[[user email]]</span>
-			<h1>[[user name]]'s <span class="hide-small">community service</span> hours</h1>
+  			<h1>[[user name]]'s <span class="hide-med">community service</span> hours</h1>
+			<a href="/add?token=[[user token]]" class="button strong" style="flex-grow:1;margin-left:20px;margin-right:16px">Add</a>
+			<span>[[user email]]</span>
+			<a href="/#signout" class="button light">Sign out</a>        
 		</div>
         <ul class="list linked">[[repeat
 				<li><a href="/edit?token=[token]&entry=[index]">[name]
