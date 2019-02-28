@@ -11,6 +11,7 @@ import (
 	"time"
 	"encoding/json"
 	"errors"
+	"os"
 )
 
 type UserData struct {
@@ -224,6 +225,22 @@ func main() {
 		w.WriteHeader(302)
 	})
 
-	fmt.Println("http://localhost:8080/");
-	http.ListenAndServe(":8080", nil)
+	port := uint64(0)
+	var err error = nil
+	switch len(os.Args) {
+	case 0,1:
+		port = 8080
+	case 2:
+		port, err = strconv.ParseUint(os.Args[1], 10, 64)
+		if err == nil {
+			break
+		}
+		fallthrough		
+	default:
+		fmt.Fprintf(os.Stderr, "usage: %s [port]", os.Args[0])
+	}
+
+	fmt.Printf("http://localhost:%v/\n", port)
+	err = http.ListenAndServe(":" + fmt.Sprint(port), nil)
+	fmt.Fprintln(os.Stderr, err)
 }
