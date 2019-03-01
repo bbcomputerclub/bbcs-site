@@ -17,6 +17,7 @@ type DBEntry struct {
 	Organization string
 	ContactName string
 	ContactEmail string
+	ContactPhone uint	
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -39,20 +40,29 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 			entry.ContactName = fmt.Sprint(val)
 		case "contact_email":	
 			entry.ContactEmail = fmt.Sprint(val)
+		case "contact_phone": 
+			h, ok := val.(float64)
+			if ok {
+				entry.ContactPhone = uint(h)
+			}
 		}
 	}
 	return nil
 }
 
 func (entry *DBEntry) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{} {
+	out := map[string]interface{} {
 		"name": entry.Name,
 		"hours": entry.Hours,
 		"date": entry.Date.Format("2006-01-02"),
 		"org": entry.Organization,
 		"contact_name": entry.ContactName,
 		"contact_email": entry.ContactEmail,
-	})
+	}
+	if entry.ContactPhone != 0 {
+		out["contact_phone"] = entry.ContactPhone	
+	}
+	return json.Marshal(out)
 }
 
 type DBDocument map[string][]*DBEntry

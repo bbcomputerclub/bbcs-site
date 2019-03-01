@@ -116,6 +116,11 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			if cmd[1] == "contact.email" { 
 				return []byte(entry.ContactEmail)
 			}
+			if cmd[1] == "contact.phone" { 
+				if entry.ContactPhone != 0 {
+					return []byte(fmt.Sprintf("%011d", entry.ContactPhone))
+				}
+			}
 			if cmd[1] == "action" {
 				if query.Get("entry")[0] == '-' {
 					return []byte("Add")
@@ -231,6 +236,9 @@ func main() {
 		if err != nil {
 			date = time.Now()
 		}
+
+		contactPhone, err := strconv.ParseUint(query.Get("contactphone"), 10, 64)
+
 		DBSet(user.Email, &DBEntry{
 			Name: query.Get("name"),
 			Hours: uint(hours),
@@ -238,6 +246,7 @@ func main() {
 			Organization: query.Get("org"),
 			ContactName: query.Get("contactname"),
 			ContactEmail: query.Get("contactemail"),
+			ContactPhone: uint(contactPhone),
 		}, index)
 	
 		w.Header().Set("Location", "/list?token=" + query.Get("token"))
