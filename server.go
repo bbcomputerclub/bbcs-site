@@ -55,13 +55,11 @@ func process(in []byte, query url.Values) ([]byte, error) {
 	}
 
 	var entry DBEntry
-	if len(query["entry"]) != 0 {
-		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil {
-			index = -1
-		}
-		entry = DBGet(user.Email, index)
+	index, err := strconv.Atoi(query.Get("entry"))
+	if err != nil {
+		index = -1
 	}
+	entry = DBGet(user.Email, index)
  	
 	return re.ReplaceAllFunc(in, func (rawcode []byte) []byte {
 		code := string(rawcode[2:len(rawcode)-2])
@@ -167,7 +165,9 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
-			w.Header().Set("Location", "/#error:" + err.Error())
+			query := r.URL.Query()
+			query.Del("token")
+			w.Header().Set("Location", "/?list?" + query.Encode() + "#error:" + err.Error())
 			w.WriteHeader(302)
 		}
 	})
@@ -185,13 +185,18 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
-			w.Header().Set("Location", "/#error:" + err.Error())
+			query := r.URL.Query()
+			query.Del("token")
+			w.Header().Set("Location", "/?edit?" + query.Encode() + "#error:" + err.Error())
+			fmt.Println(w.Header().Get("Location"))
 			w.WriteHeader(302)
 		}
 	})
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Location", "/edit?entry=-1&token=" + r.URL.Query().Get("token"))
+		query := r.URL.Query()
+		query.Set("entry", "-1")
+		w.Header().Set("Location", "/edit?" + query.Encode())
 		w.WriteHeader(302)
 	})
 

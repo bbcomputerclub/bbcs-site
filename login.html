@@ -92,7 +92,18 @@ function onSignIn(user) {
 			signOut();
 		} else {
 			showError(null);
-			location.href = "list?token=" + user.getAuthResponse().id_token;
+			var redirect = "/list";
+			if (location.search.length > 1) {
+				redirect = location.search.slice(1);
+			}
+			if (redirect.endsWith("?")) {
+				redirect += "token="
+			} else if (redirect.indexOf("?") != -1) {
+				redirect += "&token="
+			} else  {
+				redirect += "?token="
+			}
+			location.href = redirect + user.getAuthResponse().id_token;			
 		}
 	} else {
 		signOut();
