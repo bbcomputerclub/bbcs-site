@@ -158,6 +158,10 @@ h1 {
 	flex-direction: row;
 }
 
+.flex > :not(:first-child) {
+	margin-left: 16px;
+}
+
 @media (max-width: 959px) {
 	.title {
 		padding: 16px 32px;
@@ -178,8 +182,11 @@ h1 {
 	.corner {
 		right: 32px;
 	}
-	.flex {
+	.flex:not(.flex-sm) {
 		flex-direction: column;
+	}
+	.flex:not(.flex-sm) > :not(:first-child) {
+		margin-left: 0;
 	}
 }
 @media (max-width: 599px) {
@@ -201,5 +208,11 @@ h1 {
 	.corner {
 		right: 16px;
 		bottom: 16px;
+	}
+	.flex-sm {
+		flex-direction: column;
+	}
+	.flex-sm > :not(:first-child) {
+		margin-left: 0;
 	}
 }
