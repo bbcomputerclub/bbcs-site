@@ -117,3 +117,13 @@ func DBGet(email string, index int) DBEntry {
 
 	return DBEntryDefault()
 }
+
+func DBTotal(email string) uint {
+	list := DBList(email)
+
+	total := uint(0)
+	for _, entry := range list {
+		total += entry.Hours
+	}
+	return total
+}

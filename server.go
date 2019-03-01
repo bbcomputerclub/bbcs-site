@@ -81,6 +81,9 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			if cmd[1] == "token" {
 				return []byte(query.Get("token"))
 			}
+			if cmd[1] == "total" {
+				return []byte(fmt.Sprint(DBTotal(user.Email)))
+			}
 			return nil
 		case "entry":
 			if len(cmd) != 2 { return nil }
