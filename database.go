@@ -55,7 +55,7 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 	})
 }
 
-type DBDocument map[string][]DBEntry
+type DBDocument map[string][]*DBEntry
 
 /* Returns data.json or an empty document if data.jsond doesn't exist */
 func DBDocumentGet() DBDocument {
@@ -75,7 +75,7 @@ func DBDocumentGet() DBDocument {
 }
 
 /* Adds */
-func DBSet(email string, entry DBEntry, index int) {
+func DBSet(email string, entry *DBEntry, index int) {
 	doc := DBDocumentGet()
 	
 	if index < 0 {
@@ -96,19 +96,19 @@ func DBSet(email string, entry DBEntry, index int) {
 	}
 }
 
-func DBList(email string) []DBEntry {
+func DBList(email string) []*DBEntry {
 	doc := DBDocumentGet()
 	return doc[email]
 }
 
-func DBEntryDefault() DBEntry {
-	return DBEntry{
+func DBEntryDefault() *DBEntry {
+	return &DBEntry{
 		Date: time.Now(),
 		Hours: 1,
 	}
 }
 
-func DBGet(email string, index int) DBEntry {
+func DBGet(email string, index int) *DBEntry {
 	doc := DBDocumentGet()
 
 	if len(doc[email]) > index && index >= 0 {
@@ -123,7 +123,13 @@ func DBTotal(email string) uint {
 
 	total := uint(0)
 	for _, entry := range list {
-		total += entry.Hours
+		if entry != nil {
+			total += entry.Hours
+		}
 	}
 	return total
+}
+
+func DBRemove(email string, index int) {
+	DBSet(email, nil, index)
 }

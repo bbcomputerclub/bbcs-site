@@ -54,13 +54,20 @@ func process(in []byte, query url.Values) ([]byte, error) {
 		return nil, err
 	}
 
-	var entry DBEntry
-	index, err := strconv.Atoi(query.Get("entry"))
-	if err != nil {
-		index = -1
+	var entry *DBEntry = nil
+	var entryIndex int
+	if len(query.Get("entry")) != 0 {
+		entryIndex, err = strconv.Atoi(query.Get("entry"))
+		if err != nil {
+			entryIndex = -1
+		}
+		entry = DBGet(user.Email, entryIndex)
 	}
-	entry = DBGet(user.Email, index)
- 	
+
+	if entryIndex >= 0 {
+		in = regexp.MustCompile("(?s)\\<\\!\\-\\-\\[ifedit(.*)\\]\\-\\-\\>").ReplaceAll(in, []byte("$1"))
+	}
+	
 	return re.ReplaceAllFunc(in, func (rawcode []byte) []byte {
 		code := string(rawcode[2:len(rawcode)-2])
 		cmd := strings.Fields(code)
@@ -85,6 +92,9 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			return nil
 		case "entry":
 			if len(cmd) != 2 { return nil }
+			if entry == nil {
+				entry = DBEntryDefault()
+			}
 			if cmd[1] == "name" { 
 				return []byte(entry.Name)
 			}
@@ -118,7 +128,9 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			html := strings.Trim(code[6:], " \t\n")
 			out := ""
 			for i, entry := range DBList(user.Email) {
-				out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", query.Get("token"), "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
+				if entry != nil {
+					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", query.Get("token"), "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
+				}
 			}
 			return []byte(out)
 		default:
@@ -188,7 +200,6 @@ func main() {
 			query := r.URL.Query()
 			query.Del("token")
 			w.Header().Set("Location", "/?edit?" + query.Encode() + "#error:" + err.Error())
-			fmt.Println(w.Header().Get("Location"))
 			w.WriteHeader(302)
 		}
 	})
@@ -220,7 +231,7 @@ func main() {
 		if err != nil {
 			date = time.Now()
 		}
-		DBSet(user.Email, DBEntry{
+		DBSet(user.Email, &DBEntry{
 			Name: query.Get("name"),
 			Hours: uint(hours),
 			Date: date,
@@ -231,6 +242,25 @@ func main() {
 	
 		w.Header().Set("Location", "/list?token=" + query.Get("token"))
 		w.WriteHeader(302)
+	})
+
+	http.HandleFunc("/delete", func (w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		user, err := getUser(query.Get("token"))
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+		index, err := strconv.Atoi(query.Get("entry"))
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+
+		DBRemove(user.Email, index)
+	
+		w.Header().Set("Location", "/list?token=" + query.Get("token"))
+		w.WriteHeader(303)
 	})
 
 	port := uint64(0)

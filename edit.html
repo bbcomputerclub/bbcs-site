@@ -25,7 +25,10 @@
 	            <input name="contactname" class="textfield" type="text" placeholder="Contact Person" value="[[entry contact.name]]" />
 	            <input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
 	            <button type="submit" class="button strong" style="margin-top:8px">Save</button>
-         	    <button type="submit" formaction="/list" class="button" style="margin-top:8px" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
+         	    <button type="submit" formaction="/list" class="button" style="margin-top:8px;margin-left:8px;float:right" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
+         	    <!--[ifedit
+	      	        <a href="/delete?entry=[[entry index]]&token=[[user token]]" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</a>
+      	        ]-->
 	        </main>
 	   	</form>
     </body>
