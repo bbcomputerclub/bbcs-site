@@ -1,0 +1,197 @@
+body {
+    background: #FFF;
+    padding: 0; margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+.title {
+    padding: 16px 72px;
+    background: #26428b;
+    color: #FFF;
+	display: flex;
+	align-items: center;
+}
+	.title > a, .title > span {
+		color: #FFF;
+		text-decoration: none;
+		margin-left: 8px;
+	}
+	.title a:hover:not(.button) {
+		border-bottom: 2px solid;
+	}
+	.title .button {
+		padding: 0 8px;
+		margin-top: -8px;		
+		margin-bottom: -8px;
+	}
+	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
+		margin: 0;
+	}
+	.title .textfield {
+		padding: 0;
+		/* Compensate for border */
+		margin-bottom: -2px;
+	}
+
+.list {
+	padding: 0;
+	margin: 0;
+}
+	.list > li {
+		list-style-type: none;
+		padding: 8px 72px;
+		margin: 0;
+	}
+	.list.linked li {
+		padding: 0;
+	}
+	.list.linked li a {
+		text-decoration: none;
+		padding: 8px 72px;		
+		display: block;
+		color: inherit;
+		outline: 0;
+	}
+	.list.linked li a:hover, .list.linked li a:focus {
+		background: rgba(0,0,0,0.1);
+	}
+	.list.linked li a:active {
+		background: rgba(0,0,0,0.2);
+	}
+	.list:empty::after {
+		display: block;
+		margin-top: 128px;
+		font-size: 24px;
+		text-align: center;
+		content: "No hours yet :(" /* TODO: Insert a quirky empty state */
+	}
+
+main {
+    padding: 16px 72px;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.card {
+    padding: 16px;
+    border-radius: 2px;
+    background: #FFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+
+    max-width: 300px;
+    margin: auto;
+    margin-top: 10%;
+}
+    .card h1 {
+        text-align: center;
+    }
+
+.textfield {
+    outline: 0;
+    border: 0;
+    background: transparent;
+    padding: 8px 16px;
+    border-bottom: 2px solid #AAA;
+    font: inherit;
+
+    display: block;
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: fill-available;
+}
+    .textfield.dark {
+        color: #FFF;
+        border-bottom: 2px solid transparent;
+    }
+    .textfield.dark:focus {
+        color: #FFF;
+        border-bottom: 2px solid #fff;
+    }
+    .textfield:invalid {
+    	border-bottom: 2px solid #f44336;
+    	outline: 0;
+    	box-shadow: none;
+    }
+    .textfield:focus {
+        border-bottom: 2px solid #26428b;
+    }
+ 
+
+.button {
+	display: inline-block;
+    border: 4px solid transparent;
+    padding: 4px 16px;
+    background: #26428b;
+    color: #FFF;
+    outline: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    text-decoration: none;
+}
+    .button:focus {
+        border: 4px solid #3761cc;
+    }
+.button.light {
+	background: #3761cc; }
+	.button.light:focus {
+		border-color: #37ACCC;
+	}
+.button.strong {
+	background: #e91e63; }
+	.button.strong:focus {
+		border-color: #f06292; }
+
+.corner {
+	position: fixed;
+	right: 72px;
+	bottom: 32px;
+}
+
+@media (max-width: 959px) {
+	.title {
+		padding: 16px 32px;
+	}
+	main {
+		padding: 16px 32px;
+	}
+	.list > li {
+		padding: 8px 32px;
+	}
+	.list.linked li a {
+		padding: 8px 32px;
+	}
+
+	.hide-med {
+		display: none;
+	}
+	.corner {
+		right: 32px;
+	}
+}
+@media (max-width: 599px) {
+	.title {
+		padding: 16px;
+	}
+	main {
+		padding: 16px;
+	}
+	.list > li {
+		padding: 8px 16px;
+	}
+	.list.linked li a {
+		padding: 8px 16px;
+	}
+	.hide-small {
+		display: none;
+	}
+	.corner {
+		right: 16px;
+		bottom: 16px;
+	}
+}

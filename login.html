@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Login - Community Service</title>
+        <link rel="stylesheet" href="style.css">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+        <meta name="theme-color" content="#26428b">
+
+        <meta name="google-signin-scope" content="profile email">
+        <meta name="google-signin-client_id" content="914378202067-47embpa30r40lv99kqha2c601vknc1t5.apps.googleusercontent.com">
+		<style>
+.textfield {
+	margin-bottom: 8px;
+}
+body {
+	background: #26428b;
+	text-align: center;
+	color: #fff;
+}
+#signin {
+	width: 240px;
+	margin: auto;
+}
+main { 
+	padding: 0;
+	margin-top: calc(50vh - 128px);
+}
+h1 {
+	font-size: 20px;
+	margin-top: 0;
+	margin-bottom: 8px;
+}
+p {
+	margin-top: 0;
+	margin-bottom: 48px;
+}
+.error {
+	padding: 8px;
+	background: #f44336;
+	color: #fff;
+	
+	font-weight: bold;
+}
+        </style>
+    </head>
+    <body>
+	    <main>
+	    	<h1>Blind Brook Community Service</h1>
+	    	<p id="text">Welcome</p>
+	    	<div id="signin"></div>
+		</main>
+        <script>
+function init() {
+	gapi.signin2.render('signin', {
+		"scope": "profile email", 
+		"width": 240,
+		"height": 50,
+		"theme": "dark",
+		"onsuccess": onSignIn,
+		"onfailure": onFailure
+	})
+}
+
+function signOut() {
+	gapi.auth2.getAuthInstance().signOut().then(function() {
+		location.hash = "#";
+	});
+}
+
+function onFailure() {
+	var text = document.getElementById("text");
+	text.innerHTML = "Couldn't sign you in. Try again.";
+	text.classList.add("error");
+}
+
+function showError(msg) {
+	var text = document.getElementById("text");	
+	if (msg == null) {
+		text.innerHTML = "";
+		text.classList.remove("error");		
+	} else {
+		text.innerHTML = msg;
+		text.classList.add("error");
+	}
+}
+
+function onSignIn(user) {
+	if (location.hash !== "#signout") {
+		var profile = user.getBasicProfile();
+		if (!profile.getEmail().endsWith("@blindbrook.org")) {
+			showError(profile.getEmail() + " is not associated with Blind Brook. Try signing in with a different account.");
+			signOut();
+		} else {
+			showError(null);
+			var redirect = "/list";
+			if (location.search.length > 1) {
+				redirect = location.search.slice(1);
+			}
+			if (redirect.endsWith("?")) {
+				redirect += "token="
+			} else if (redirect.indexOf("?") != -1) {
+				redirect += "&token="
+			} else  {
+				redirect += "?token="
+			}
+			location.href = redirect + user.getAuthResponse().id_token;			
+		}
+	} else {
+		signOut();
+	}
+}
+
+if (location.hash.startsWith("#error:")) {
+	showError(location.hash.slice(7));
+}
+		</script>
+        <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>		
+    </body>
+</html>
+
+
