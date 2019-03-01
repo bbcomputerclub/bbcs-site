@@ -153,6 +153,11 @@ h1 {
 	bottom: 32px;
 }
 
+.flex {
+	display: flex;
+	flex-direction: row;
+}
+
 @media (max-width: 959px) {
 	.title {
 		padding: 16px 32px;
@@ -172,6 +177,9 @@ h1 {
 	}
 	.corner {
 		right: 32px;
+	}
+	.flex {
+		flex-direction: column;
 	}
 }
 @media (max-width: 599px) {
