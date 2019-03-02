@@ -15,18 +15,18 @@
 				<a href="/#signout" class="button light">Sign out</a>        
 	        </div>
 	        <main>
-	            <div style="display:flex">
-	                <input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required style="margin-right: 16px" value="[[entry hours]]" />
+	            <div class="flex flex-sm">
+	                <input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="[[entry hours]]" />
 	                <input name="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[entry date]]" />
 	            </div>
 				<input name="entry" type="hidden" value="[[entry index]]">
 				<input name="token" type="hidden" value="[[user token]]">
 				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="[[entry org]]" required />
 				
-	            <div style="display:flex">
-		            <input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="[[entry contact.name]]" style="margin-right: 16px" />
-		            <input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" style="margin-right: 16px" />
-	   	            <input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="[[entry contact.phone]]" pattern="[0-9\-\+ ]+" style="margin-right: 16px" />      
+	            <div class="flex">
+		            <input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="[[entry contact.name]]" />
+		            <input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
+	   	            <input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="[[entry contact.phone]]" pattern="[0-9\-\+ ]+" style="margin-right: 16px" />
 	   	       	</div>
 	            <button type="submit" class="button strong" style="margin-top:8px">Save</button>
          	    <button type="submit" formaction="/list" class="button" style="margin-top:8px;margin-left:8px;float:right" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
