@@ -42,7 +42,6 @@ func getUser(token string) (UserData, error) {
 	}
 
 	out := UserData{}
-
 	out.Email = fmt.Sprint(data["email"])
 	if out.Email != "bstarr@blindbrook.org" {
 		out.Name = fmt.Sprint(data["name"])
