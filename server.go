@@ -118,7 +118,14 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			}
 			if cmd[1] == "contact.phone" { 
 				if entry.ContactPhone != 0 {
-					return []byte(fmt.Sprintf("%011d", entry.ContactPhone))
+					str := fmt.Sprint(entry.ContactPhone)
+					if len(str) == 10 {
+						return []byte(str[0:3] + "-" + str[3:6] + "-" + str[6:])
+					} else if len(str) == 11 && str[0] == '1' {
+						return []byte("+1 " + str[1:4] + "-" + str[4:7] + "-" + str[7:])
+					} else {
+						return []byte("+" + str)
+					}
 				}
 			}
 			if cmd[1] == "action" {
@@ -237,7 +244,10 @@ func main() {
 			date = time.Now()
 		}
 
-		contactPhone, err := strconv.ParseUint(query.Get("contactphone"), 10, 64)
+		contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+		if err != nil {
+			contactPhone = 0
+		}
 
 		DBSet(user.Email, &DBEntry{
 			Name: query.Get("name"),
