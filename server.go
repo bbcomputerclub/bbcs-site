@@ -194,6 +194,11 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(body)
 	})	
+
+	http.HandleFunc("/source", func (w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", "https://github.com/bbcomputerclub/bbcs-site/")
+		w.WriteHeader(301)
+	})
 	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
 		body, err := ioutil.ReadFile("list.html")
