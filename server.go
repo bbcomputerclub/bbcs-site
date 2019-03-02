@@ -41,10 +41,16 @@ func getUser(token string) (UserData, error) {
 		return UserData{}, errors.New("Not blindbrook")
 	}
 
-	return UserData{
-				Name: fmt.Sprint(data["name"]),
-				Email: fmt.Sprint(data["email"]),
-			}, nil
+	out := UserData{}
+
+	out.Email = fmt.Sprint(data["email"])
+	if out.Email != "bstarr@blindbrook.org" {
+		out.Name = fmt.Sprint(data["name"])
+	} else {
+		out.Name = "Robert Starr"
+	}
+
+	return out, nil
 }
 
 func process(in []byte, query url.Values) ([]byte, error) {
