@@ -1,0 +1,9 @@
+{
+	"name": "Blind Brook Community Service",
+	"short_name": "BBCS",
+	"display": "standalone",
+	"description": "Enter your community service hours",
+	"background_color": "#eee",
+	"theme_color": "#26428b",
+	"start_url": "/"
+}

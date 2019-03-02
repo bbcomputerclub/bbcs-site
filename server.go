@@ -178,6 +178,18 @@ func main() {
 		w.Header().Set("Content-Type", "text/css")
 		w.Write(body)
 	})
+
+	http.HandleFunc("/manifest.json", func (w http.ResponseWriter, r *http.Request) { 
+		body, err := ioutil.ReadFile("manifest.json")
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+	})	
+	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
 		body, err := ioutil.ReadFile("list.html")
 		if err != nil {
