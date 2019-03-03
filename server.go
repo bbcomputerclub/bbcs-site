@@ -61,7 +61,7 @@ func getUser(token string) (UserData, error) {
 	json.Unmarshal(body, &data)
 
 	if data["error"] != nil {
-		return UserData{}, errors.New("Couldn't sign you in: " + fmt.Sprint(data["error"]))
+		return UserData{}, errors.New("Not signed in: " + fmt.Sprint(data["error"]))
 	}
 
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
