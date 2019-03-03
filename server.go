@@ -49,23 +49,23 @@ type UserData struct {
 func getUser(token string) (UserData, error) {
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)	
 	if err != nil {
-		return UserData{}, err
+		return UserData{}, errors.New("Something went wrong. Try again.")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return UserData{}, err
+		return UserData{}, errors.New("Something went wrong. Try again.")
 	}
 
 	data := make(map[string]interface{})
 	json.Unmarshal(body, &data)
 
 	if data["error"] != nil {
-		return UserData{}, errors.New(fmt.Sprint(data["error"]))
+		return UserData{}, errors.New("Couldn't sign you in: " + fmt.Sprint(data["error"]))
 	}
 
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
-		return UserData{}, errors.New("Not blindbrook")
+		return UserData{}, errors.New("That account isn't associated with Blind Brook.")
 	}
 
 	out := UserData{}
