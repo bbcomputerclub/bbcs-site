@@ -15,6 +15,32 @@ import (
 	"os"
 )
 
+func entryFromQuery(query url.Values) *DBEntry {
+	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
+	if err != nil {
+		hours = 1
+	}
+	date, err := time.Parse("2006-01-02", query.Get("date"))
+	if err != nil {
+		date = time.Now()
+	}
+
+	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+	if err != nil {
+		contactPhone = 0
+	}
+
+	return &DBEntry{
+		Name: query.Get("name"),
+		Hours: uint(hours),
+		Date: date,
+		Organization: query.Get("org"),
+		ContactName: query.Get("contactname"),
+		ContactEmail: query.Get("contactemail"),
+		ContactPhone: uint(contactPhone),
+	}
+}
+
 type UserData struct {
 	Name string
 	Email string
@@ -64,10 +90,9 @@ func process(in []byte, query url.Values) ([]byte, error) {
 	var entryIndex int
 	if len(query.Get("entry")) != 0 {
 		entryIndex, err = strconv.Atoi(query.Get("entry"))
-		if err != nil {
-			entryIndex = -1
+		if err == nil && entryIndex >= 0 {
+			entry = DBGet(user.Email, entryIndex)
 		}
-		entry = DBGet(user.Email, entryIndex)
 	}
 
 	if entryIndex >= 0 {
@@ -99,7 +124,7 @@ func process(in []byte, query url.Values) ([]byte, error) {
 		case "entry":
 			if len(cmd) != 2 { return nil }
 			if entry == nil {
-				entry = DBEntryDefault()
+				entry = entryFromQuery(query)
 			}
 			if cmd[1] == "name" { 
 				return []byte(entry.Name)
@@ -300,29 +325,8 @@ func main() {
 			w.WriteHeader(400)
 			return
 		}
-		hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
-		if err != nil {
-			hours = 1
-		}
-		date, err := time.Parse("2006-01-02", query.Get("date"))
-		if err != nil {
-			date = time.Now()
-		}
 
-		contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
-		if err != nil {
-			contactPhone = 0
-		}
-
-		DBSet(user.Email, &DBEntry{
-			Name: query.Get("name"),
-			Hours: uint(hours),
-			Date: date,
-			Organization: query.Get("org"),
-			ContactName: query.Get("contactname"),
-			ContactEmail: query.Get("contactemail"),
-			ContactPhone: uint(contactPhone),
-		}, index)
+		DBSet(user.Email, entryFromQuery(query), index)
 	
 		w.Header().Set("Location", "/list?token=" + query.Get("token"))
 		w.WriteHeader(302)
