@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Login</title>
-     	<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
-     	<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">     	
-     	<link rel="apple-touch-icon" href="/icons/192.png">
+	<head>
+		<title>Login</title>
+	 	<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
+	 	<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">	 	
+	 	<link rel="apple-touch-icon" href="/icons/192.png">
 
-     	<meta name="generator" content="Micro: a terminal-based plain text editor">
-     	<meta name="description" content="Enter your community service hours">
-     	<meta name="application-name" content="BBCS">
+	 	<meta name="generator" content="Micro: a terminal-based plain text editor">
+	 	<meta name="description" content="Enter your community service hours">
+	 	<meta name="application-name" content="BBCS">
 
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-     	
+	 	
 		<link rel="stylesheet" href="style.css">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-        <meta name="theme-color" content="#26428b">
-        <link rel="manifest" href="/manifest.json">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+		<meta name="theme-color" content="#26428b">
+		<link rel="manifest" href="/manifest.json">
 
-        <meta name="google-signin-scope" content="profile email">
-        <meta name="google-signin-client_id" content="914378202067-47embpa30r40lv99kqha2c601vknc1t5.apps.googleusercontent.com">
+		<meta name="google-signin-scope" content="profile email">
+		<meta name="google-signin-client_id" content="914378202067-47embpa30r40lv99kqha2c601vknc1t5.apps.googleusercontent.com">
 		<style>
 .textfield {
 	margin-bottom: 8px;
@@ -53,15 +53,15 @@ p {
 	
 	font-weight: bold;
 }
-        </style>
-    </head>
-    <body>
-	    <main>
-	    	<h1>Blind Brook Community Service</h1>
-	    	<p id="text">Welcome</p>
-	    	<div id="signin"></div>
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Blind Brook Community Service</h1>
+			<p id="text">Welcome</p>
+			<div id="signin"></div>
 		</main>
-        <script>
+		<script>
 function init() {
 	gapi.signin2.render('signin', {
 		"scope": "profile email", 
@@ -126,8 +126,8 @@ if (location.hash.startsWith("#error:")) {
 	showError(location.hash.slice(7));
 }
 		</script>
-        <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>		
-    </body>
+		<script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>		
+	</body>
 </html>
 
 

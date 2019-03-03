@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>[[entry action]] [[entry name]]</title>
-     	<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
-     	<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">     	
-     	<link rel="apple-touch-icon" href="/icons/192.png">
+	<head>
+		<title>[[entry action]] [[entry name]]</title>
+		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
+		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">		 
+		<link rel="apple-touch-icon" href="/icons/192.png">
 
-     	<meta name="generator" content="Micro: a terminal-based plain text editor">
-     	<meta name="description" content="Enter your community service hours">
-     	<meta name="application-name" content="BBCS">
+		<meta name="generator" content="Micro: a terminal-based plain text editor">
+		<meta name="description" content="Enter your community service hours">
+		<meta name="application-name" content="BBCS">
 
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-        <link rel="stylesheet" href="style.css">
-        <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-        <meta name="theme-color" content="#26428b">
-        <link rel="manifest" href="/manifest.json">
-    </head>
-    <body>
-    	<!-- Will change to something like /submit.html that will update database & redirect to /list.html -->
-    	<form action="/update" method="GET">
-	        <div class="title">
+		<link rel="stylesheet" href="style.css">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+		<meta name="theme-color" content="#26428b">
+		<link rel="manifest" href="/manifest.json">
+	</head>
+	<body>
+		<!-- Will change to something like /submit.html that will update database & redirect to /list.html -->
+		<form action="/update" method="GET">
+			<div class="title">
 				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="[[entry name]]" required></h1>
 				<span>[[user email]]</span>	
-				<a href="/#signout" class="button light">Sign out</a>        
-	        </div>
-	        <main>
-	            <div class="flex flex-sm">
-	                <input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="[[entry hours]]" />
-	                <input name="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[entry date]]" />
-	            </div>
+				<a href="/#signout" class="button light">Sign out</a>		
+			</div>
+			<main>
+				<div class="flex flex-sm">
+					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="[[entry hours]]" />
+					<input name="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[entry date]]" />
+				</div>
 				<input name="entry" type="hidden" value="[[entry index]]">
 				<input name="token" type="hidden" value="[[user token]]">
 				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="[[entry org]]" required />
 				
-	            <div class="flex">
-		            <input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="[[entry contact.name]]" />
-		            <input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
-	   	            <input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="[[entry contact.phone]]" pattern="[0-9\-\+ ]+" />
-	   	       	</div>
-	            <button type="submit" class="button strong" style="margin-top:8px">Save</button>
-         	    <button type="submit" formaction="/list" class="button" style="margin-top:8px;margin-left:8px;float:right" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
-         	    <!--[ifedit
-	      	        <a href="/delete?entry=[[entry index]]&token=[[user token]]" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</a>
-      	        ]-->
-	        </main>
-	   	</form>
-    </body>
+				<div class="flex">
+					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="[[entry contact.name]]" />
+					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" />
+					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="[[entry contact.phone]]" pattern="[0-9\-\+ ]+" />
+				</div>
+				<button type="submit" class="button strong" style="margin-top:8px">Save</button>
+				<button type="submit" formaction="/list" class="button" style="margin-top:8px;margin-left:8px;float:right" onclick="location.href = '/list?token=[[user token]]';return false">Cancel</button> 
+				<!--[ifedit
+					<a href="/delete?entry=[[entry index]]&token=[[user token]]" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</a>
+				]-->
+			</main>
+			</form>
+	</body>
 </html>
