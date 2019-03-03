@@ -261,7 +261,17 @@ func main() {
 		
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(body)
-	})	
+	})
+
+	http.HandleFunc("/generator", func (w http.ResponseWriter, r *http.Request) {
+		file, err := os.Open("generator.html")
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		io.Copy(w, file)
+	})
 
 	http.HandleFunc("/source", func (w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", "https://github.com/bbcomputerclub/bbcs-site/")
