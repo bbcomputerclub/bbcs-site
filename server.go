@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"strings"
 	"regexp"
@@ -171,6 +172,48 @@ func main() {
 		
 		w.Header().Set("Content-Type", "text/html")
 		w.Write(body)
+	})
+
+	http.HandleFunc("/icons/", func (w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, ".png") {
+			file, err := os.Open("icon-" + r.URL.Path[7:])
+			if err != nil {
+				w.Header().Set("Content-Type", "text/plain")					
+				w.WriteHeader(404)
+				return
+			}
+			w.Header().Set("Content-Type", "image/png")
+			io.Copy(w, file)	
+			return
+		} else if strings.HasSuffix(r.URL.Path, ".svg") {
+			bodybyte, err := ioutil.ReadFile("icon.svg")
+			if err != nil {
+				w.Header().Set("Content-Type", "text/plain")			
+				w.WriteHeader(500)
+				return
+			}
+			body := string(bodybyte)
+			len := r.URL.Path[7:len(r.URL.Path) - 4]
+
+			if _, err := strconv.Atoi(len); err != nil {
+				w.Header().Set("Content-Type", "text/plain")
+				w.WriteHeader(404)
+				return
+			}
+
+			i := strings.Index(body, "width=\"")
+			j := strings.Index(body[i+7:], "\"") + i+7
+			body = body[0:i + 7] + len + body[j:]
+
+			i = strings.Index(body, "height=\"")
+			j = strings.Index(body[i+8:], "\"") + i+8
+			body = body[0:i + 8] + len + body[j:]
+
+			w.Header().Set("Content-Type", "image/svg+xml")
+			w.Write([]byte(body))
+			return
+		}
+		w.WriteHeader(404)
 	})
 	
 	http.HandleFunc("/style.css", func (w http.ResponseWriter, r *http.Request) { 
