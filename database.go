@@ -65,6 +65,11 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(out)
 }
 
+func (entry *DBEntry) Editable() bool {
+	duration, _ := time.ParseDuration("1h")
+	return time.Since(entry.Date) <= duration * 24 * 30
+}
+
 type DBDocument map[string][]*DBEntry
 
 /* Returns data.json or an empty document if data.jsond doesn't exist */

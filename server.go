@@ -79,6 +79,64 @@ func getUser(token string) (UserData, error) {
 	return out, nil
 }
 
+/* Returns the action */
+func processAction (entry *DBEntry, query url.Values) string {
+	if len(query.Get("entry")) != 0 && query.Get("entry")[0] == '-' {
+		return "Add"
+	} else if !entry.Editable() {
+		return "View"
+	} else {
+		return "Edit"
+	}
+}
+
+func processBlock (in []byte, action string) []byte {
+	fields := strings.Fields(string(in))
+	if len(fields) < 3 {
+		return nil
+	}
+	not := fields[0] == "ifnot"
+	if not != (fields[1] == action) {
+		return []byte(strings.Join(fields[2:], " "))
+	}
+	return nil
+}
+
+/* Perform <!--[ ... ]--> substitutions */
+func processBlocks (indata []byte, action string) []byte {
+	out := string(indata)
+	start, end := -1, -1
+	count := 0
+	hasNested := false
+	for index := 0; index < len(out); index++ {
+		if strings.HasPrefix(out[index:], "<!--[") {
+			if count == 0 {
+				start = index			
+			} else {
+				hasNested = true
+			}
+			count++
+		}
+		if strings.HasPrefix(out[index:], "]-->") {
+			count--
+			if count == 0 {
+				end = index
+				parsed := processBlock([]byte(out[start+5:end]), action)
+				out = string(out[0:start]) + string(parsed) + string(out[end+4:])
+				index -= (end+4 - start) - len(parsed)
+				start, end = -1, -1
+			}
+		}
+	}
+
+	// [5 [7 2] [5 3] 6]
+	if hasNested {
+		return processBlocks ([]byte(out), action)
+	} else {
+		return []byte(out)
+	}
+}
+
 func process(in []byte, query url.Values) ([]byte, error) {
 	var re = regexp.MustCompile("(?s)\\[\\[.*?\\]\\]")
 	user, err := getUser(query.Get("token"))
@@ -94,10 +152,11 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			entry = DBGet(user.Email, entryIndex)
 		}
 	}
-
-	if entryIndex >= 0 {
-		in = regexp.MustCompile("(?s)\\<\\!\\-\\-\\[ifedit(.*)\\]\\-\\-\\>").ReplaceAll(in, []byte("$1"))
+	if entry == nil {
+		entry = entryFromQuery(query)
 	}
+
+	in = processBlocks(in, processAction(entry, query))
 	
 	return re.ReplaceAllFunc(in, func (rawcode []byte) []byte {
 		code := string(rawcode[2:len(rawcode)-2])
@@ -106,6 +165,13 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			return nil
 		}
 		switch cmd[0] {
+		case "date":
+			if len(cmd) < 2 { return []byte(time.Now().Format("2006-01-02")) }
+			diff, err := strconv.Atoi(cmd[1])
+			if err != nil {
+				return nil
+			}
+			return []byte(time.Now().AddDate(0,0,diff).Format("2006-01-02"))
 		case "user":
 			if len(cmd) != 2 { return nil }
 			if cmd[1] == "name" {
@@ -123,9 +189,6 @@ func process(in []byte, query url.Values) ([]byte, error) {
 			return nil
 		case "entry":
 			if len(cmd) != 2 { return nil }
-			if entry == nil {
-				entry = entryFromQuery(query)
-			}
 			if cmd[1] == "name" { 
 				return []byte(entry.Name)
 			}
@@ -160,10 +223,13 @@ func process(in []byte, query url.Values) ([]byte, error) {
 				}
 			}
 			if cmd[1] == "action" {
-				if query.Get("entry")[0] == '-' {
-					return []byte("Add")
+				return []byte(processAction(entry, query))
+			}
+			if cmd[1] == "disabled" {
+				if processAction(entry, query) != "View" {
+					return nil
 				} else {
-					return []byte("Edit")
+					return []byte("disabled")
 				}
 			}
 			return nil
@@ -336,7 +402,20 @@ func main() {
 			return
 		}
 
-		DBSet(user.Email, entryFromQuery(query), index)
+		if index >= 0 {
+			if !DBGet(user.Email, index).Editable() {
+				w.WriteHeader(403)
+				return
+			}
+		}
+
+		newEntry := entryFromQuery(query)
+		if !newEntry.Editable() {
+			w.WriteHeader(403)
+			return		
+		}
+		
+		DBSet(user.Email, newEntry, index)
 	
 		w.Header().Set("Location", "/list?token=" + query.Get("token"))
 		w.WriteHeader(302)
@@ -350,8 +429,13 @@ func main() {
 			return
 		}
 		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil {
+		if err != nil || index < 0 {
 			w.WriteHeader(400)
+			return
+		}
+
+		if !DBGet(user.Email, index).Editable() {
+			w.WriteHeader(403)
 			return
 		}
 
