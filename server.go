@@ -45,28 +45,33 @@ type UserData struct {
 	Email string
 }
 
+/* Passes token through Google servers to validate it */
 func getUser(token string) (UserData, error) {
+	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)	
 	if err != nil {
 		return UserData{}, errors.New("Something went wrong. Try again.")
 	}
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return UserData{}, errors.New("Something went wrong. Try again.")
 	}
 
+	// The data is stored in JSON. Unmarshal the data
 	data := make(map[string]interface{})
 	json.Unmarshal(body, &data)
 
+	// If the error field is present, there is an error
 	if data["error"] != nil {
 		return UserData{}, errors.New("Not signed in: " + fmt.Sprint(data["error"]))
 	}
 
+	// Make sure the domain is Blind Brook (the account is from Blind Brook)
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
 		return UserData{}, errors.New("That account isn't associated with Blind Brook.")
 	}
 
+	// Create UserData struct; fmt.Sprint converts things to strings (just in case it's not a string)
 	out := UserData{}
 	out.Email = fmt.Sprint(data["email"])
 	if out.Email != "bstarr@blindbrook.org" {
@@ -97,6 +102,10 @@ func main() {
 
 	http.HandleFunc("/icons/", func (w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, ".png") {
+		/* PNG
+		 * PNG files are stored in the directory as icon-N.png
+		 * This section simply retrieves the file and serves it
+		 */
 			file, err := os.Open("icon-" + r.URL.Path[7:])
 			if err != nil {
 				w.Header().Set("Content-Type", "text/plain")					
@@ -107,6 +116,11 @@ func main() {
 			io.Copy(w, file)	
 			return
 		} else if strings.HasSuffix(r.URL.Path, ".svg") {
+		/* SVG
+		 * SVG code is found in icon.svg
+		 * This section retrieves icon.svg, replaces the width and height attributes, and then serves the modified file
+		 */
+			// Get icon.svg
 			bodybyte, err := ioutil.ReadFile("icon.svg")
 			if err != nil {
 				w.Header().Set("Content-Type", "text/plain")			
@@ -116,12 +130,14 @@ func main() {
 			body := string(bodybyte)
 			len := r.URL.Path[7:len(r.URL.Path) - 4]
 
+			// Make sure filename is an integer
 			if _, err := strconv.Atoi(len); err != nil {
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(404)
 				return
 			}
 
+			// Replace width and height attributes
 			i := strings.Index(body, "width=\"")
 			j := strings.Index(body[i+7:], "\"") + i+7
 			body = body[0:i + 7] + len + body[j:]
@@ -130,6 +146,7 @@ func main() {
 			j = strings.Index(body[i+8:], "\"") + i+8
 			body = body[0:i + 8] + len + body[j:]
 
+			// Serve
 			w.Header().Set("Content-Type", "image/svg+xml")
 			w.Write([]byte(body))
 			return
@@ -170,6 +187,7 @@ func main() {
 	})
 
 	http.HandleFunc("/source", func (w http.ResponseWriter, r *http.Request) {
+		// Redirect to the GitHub repo; 301 is a permanant redirect
 		w.Header().Set("Location", "https://github.com/bbcomputerclub/bbcs-site/")
 		w.WriteHeader(301)
 	})
@@ -185,6 +203,7 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
+			// If there was an error, redirect to the login page
 			query := r.URL.Query()
 			query.Del("token")
 			w.Header().Set("Location", "/?list?" + query.Encode() + "#error:" + err.Error())
@@ -192,9 +211,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 
-		/* TODO: Need to disable after 30 days */
-	
+	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
 		body, err := ioutil.ReadFile("edit.html")
 		if err != nil {
 			w.WriteHeader(500)
@@ -219,6 +236,7 @@ func main() {
 		w.WriteHeader(302)
 	})
 
+	// Updates an entry
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		user, err := getUser(query.Get("token"))
@@ -232,6 +250,7 @@ func main() {
 			return
 		}
 
+		// Make sure existing entry (if there is one) is editable
 		if index >= 0 {
 			if !DBGet(user.Email, index).Editable() {
 				w.WriteHeader(403)
@@ -240,17 +259,20 @@ func main() {
 		}
 
 		newEntry := entryFromQuery(query)
-		if !newEntry.Editable() {
+		if !newEntry.Editable() { // Make sure new entry is editable (not past 30 days)
 			w.WriteHeader(403)
 			return		
 		}
-		
+
+		// Make changes
 		DBSet(user.Email, newEntry, index)
-	
+
+		// Redirect
 		w.Header().Set("Location", "/list?token=" + query.Get("token"))
 		w.WriteHeader(302)
 	})
 
+	// Removes an entry
 	http.HandleFunc("/delete", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		user, err := getUser(query.Get("token"))
@@ -264,6 +286,7 @@ func main() {
 			return
 		}
 
+		// Makes sure entry is editable
 		if !DBGet(user.Email, index).Editable() {
 			w.WriteHeader(403)
 			return
@@ -285,7 +308,7 @@ func main() {
 		if err == nil {
 			break
 		}
-		fallthrough		
+		fallthrough
 	default:
 		fmt.Fprintf(os.Stderr, "usage: %s [port]", os.Args[0])
 	}

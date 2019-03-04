@@ -1,5 +1,10 @@
 package main
 
+/* Database functions
+ *
+ * Contains the functions necessary for interfacing with the database
+ */ 
+
 import (
 	"time"
 	"os"
@@ -89,7 +94,7 @@ func DBDocumentGet() DBDocument {
 	return doc
 }
 
-/* Adds */
+/* Adds / changes an entry */
 func DBSet(email string, entry *DBEntry, index int) {
 	doc := DBDocumentGet()
 	
@@ -111,11 +116,13 @@ func DBSet(email string, entry *DBEntry, index int) {
 	}
 }
 
+/* Lists the entries */
 func DBList(email string) []*DBEntry {
 	doc := DBDocumentGet()
 	return doc[email]
 }
 
+/* The default entry. */
 func DBEntryDefault() *DBEntry {
 	return &DBEntry{
 		Date: time.Now(),
@@ -123,6 +130,7 @@ func DBEntryDefault() *DBEntry {
 	}
 }
 
+/* Retrieves an entry. If not found, returns the default entry */
 func DBGet(email string, index int) *DBEntry {
 	doc := DBDocumentGet()
 
@@ -133,6 +141,7 @@ func DBGet(email string, index int) *DBEntry {
 	return DBEntryDefault()
 }
 
+/* Returns the total # of hours */
 func DBTotal(email string) uint {
 	list := DBList(email)
 
@@ -145,6 +154,7 @@ func DBTotal(email string) uint {
 	return total
 }
 
+/* Removes an entry */
 func DBRemove(email string, index int) {
 	DBSet(email, nil, index)
 }
