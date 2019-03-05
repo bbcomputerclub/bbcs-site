@@ -22,28 +22,30 @@
         <h1>Link Generator</h1>
     </div>
     <main>
-    	<form>
-	        <input id="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" required></h1>
-	        <div class="flex flex-sm">
-	            <input id="hours" class="textfield" type="number" min="1" placeholder="Hours" required />
-	            <input id="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" />
-	        </div>
-	        <input id="org" class="textfield" type="text" placeholder="Service Organization" required />
-	
-	        <div class="flex">
-	            <input id="contactname" class="textfield" type="text" placeholder="Contact Person" required />
-	            <input id="contactemail" class="textfield" type="email" placeholder="Contact Email" />
-	            <input id="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" pattern="[0-9\-\+ ]+" />
-	        </div>
+        <input id="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" required></h1>
+        <div class="flex flex-sm">
+            <input id="hours" class="textfield" type="number" min="1" placeholder="Hours" required />
+            <input id="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" />
+        </div>
+        <input id="org" class="textfield" type="text" placeholder="Service Organization" required />
+
+        <div class="flex">
+            <input id="contactname" class="textfield" type="text" placeholder="Contact Person" required />
+            <input id="contactemail" class="textfield" type="email" placeholder="Contact Email" />
+            <input id="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" pattern="[0-9\-\+ ]+" />
+        </div>
 	        ​
-	        <button class="button strong" type="submit" onsubmit="createLink()" style="margin-top:8px;margin-bottom: 8px;width:100%">Create Link</button>
-        </form>
         <div>
             <a id="out"></a>
         </div>
 
     </main>
 <script>
+	var elems = document.getElementsByTagName("input");
+	for (var i = 0; i < elems.length; i++) {
+		elems[i].oninput = createLink;
+	}
+
     function createLink() {
             var name = document.getElementById("name").value.trim().replace(/\s/g,'+')
             var hours = document.getElementById("hours").value.trim().replace(/\s/g,'+')
