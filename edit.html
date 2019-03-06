@@ -42,13 +42,15 @@
 				</div>
 				<!--[ifnot View
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
+					<button formaction="/add" type="submit" class="button" style="margin-top:8px">Duplicate</button>
 					<a class="button" style="margin-top:8px;margin-left:8px;float:right" href="/list?token=[[user token]]">Cancel</a> 
 					<!--[if Edit
 						<a href="/delete?entry=[[entry index]]&token=[[user token]]" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</a>
 					]-->
 				]-->
 				<!--[if View
-					<a class="button" href="/list?token=[[user token]]" style="margin-top:8px">Back</a>
+					<button formaction="/add" type="submit" class="button" style="margin-top:8px">Duplicate</button>
+					<a class="button" href="/list?token=[[user token]]" style="margin-top:8px;float:right">Back</a>
 				]-->
 			</main>
 			</form>
