@@ -113,14 +113,7 @@ func main() {
 			return
 		}
 	
-		body, err := ioutil.ReadFile("login.html")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(body)
+		http.ServeFile(w, r, "login.html")
 	})
 
 	http.HandleFunc("/icons/", func (w http.ResponseWriter, r *http.Request) {
@@ -178,35 +171,15 @@ func main() {
 	})
 	
 	http.HandleFunc("/style.css", func (w http.ResponseWriter, r *http.Request) { 
-		body, err := ioutil.ReadFile("style.css")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		
-		w.Header().Set("Content-Type", "text/css")
-		w.Write(body)
+		http.ServeFile(w, r, "style.css")
 	})
 
 	http.HandleFunc("/manifest.json", func (w http.ResponseWriter, r *http.Request) { 
-		body, err := ioutil.ReadFile("manifest.json")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(body)
+		http.ServeFile(w, r, "manifest.json")
 	})
 
 	http.HandleFunc("/generator", func (w http.ResponseWriter, r *http.Request) {
-		file, err := os.Open("generator.html")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html")
-		io.Copy(w, file)
+		http.ServeFile(w, r, "generator.html")
 	})
 
 	http.HandleFunc("/source", func (w http.ResponseWriter, r *http.Request) {
