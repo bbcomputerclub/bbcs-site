@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"net"
 )
 
 const (
@@ -51,21 +52,23 @@ func entryFromQuery(query url.Values) *DBEntry {
 	}
 }
 
-func dataFromQuery(query url.Values) (UserData, *DBEntry, int, string) {
-	user, err := getUser(query.Get("token"))
+func dataFromQuery(query url.Values, ip string) (UserData, *DBEntry, int) {
+	user, err := getUser(signinMap[ip])
 	if err != nil {
-		return UserData{}, nil, 0, ""
+		fmt.Fprintln(os.Stderr, "Couldn't find user with ip: " + ip)
+		return UserData{}, nil, 0
 	}
 
 	var entry *DBEntry = nil
 	var entryIndex int
-	if entryIndex, err := strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
+	if entryIndex, err = strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
 		entry = DBGet(user.Email, entryIndex)
 	} else {
 		entry = entryFromQuery(query)
 		entryIndex = -1
 	}	
-	return user, entry, entryIndex, query.Get("token")
+
+	return user, entry, entryIndex
 }
 
 /* Passes token through Google servers to validate it */
@@ -106,7 +109,24 @@ func getUser(token string) (UserData, error) {
 	return out, nil
 }
 
+func getIP(r *http.Request) string {
+	ipstr := r.Header.Get("X-Forwarded-For")
+	if ipstr == "" {
+		ipstr = r.RemoteAddr
+	}
+	iphost, _, err := net.SplitHostPort(ipstr)
+	if err != nil {
+		return ""
+	}
+
+	return iphost
+}
+
+// Maps IP address to tokens - IP address is the computer, token is the Google token (see #11)
+var signinMap = make(map[string]string)
+
 func main() {
+	/* Static pages */
 	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			w.WriteHeader(404)
@@ -187,20 +207,58 @@ func main() {
 		w.Header().Set("Location", "https://github.com/bbcomputerclub/bbcs-site/")
 		w.WriteHeader(301)
 	})
+
+
+	/* Dynamic pages */
+	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+
+		signinMap[ip] = r.URL.Query().Get("token")
+		redirect := r.URL.Query().Get("redirect")
+		if redirect == "" {
+			redirect = "/list"
+		}
+
+		w.Header().Set("Location", redirect)
+		w.WriteHeader(303)
+	})
+
+	http.HandleFunc("/signout", func (w http.ResponseWriter, r *http.Request) {
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+		
+		delete(signinMap, ip)
+
+		w.Header().Set("Location", "/#signout")
+		w.WriteHeader(303)
+	})
 	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+
 		body, err := ioutil.ReadFile("list.html")
 		if err != nil {
 			w.WriteHeader(500)
 			return
 		}
 
-		user, entry, entryIndex, token := dataFromQuery(r.URL.Query())
+		user, entry, entryIndex := dataFromQuery(r.URL.Query(), ip)
 		if user.Email == "" {
 			w.WriteHeader(403)
 			return
 		}
-		if res, err := process(body, user, entry, entryIndex, token);  err == nil {
+		if res, err := process(body, user, entry, entryIndex);  err == nil {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
@@ -213,18 +271,24 @@ func main() {
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+
 		body, err := ioutil.ReadFile("edit.html")
 		if err != nil {
 			w.WriteHeader(500)
 			return
 		}
 		
-		user, entry, entryIndex, token := dataFromQuery(r.URL.Query())
+		user, entry, entryIndex := dataFromQuery(r.URL.Query(), ip)
 		if user.Email == "" {
 			w.WriteHeader(403)
 			return
 		}
-		if res, err := process(body, user, entry, entryIndex, token);  err == nil {
+		if res, err := process(body, user, entry, entryIndex);  err == nil {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
@@ -246,7 +310,14 @@ func main() {
 	// Updates an entry
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		user, err := getUser(query.Get("token"))
+	
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+		
+		user, err := getUser(signinMap[ip])
 		if err != nil {
 			w.WriteHeader(400)
 			return
@@ -282,7 +353,14 @@ func main() {
 	// Removes an entry
 	http.HandleFunc("/delete", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		user, err := getUser(query.Get("token"))
+	
+		ip := getIP(r)
+		if ip == "" {
+			w.WriteHeader(400)
+			return
+		}
+
+		user, err := getUser(signinMap[ip])
 		if err != nil {
 			w.WriteHeader(400)
 			return

@@ -104,18 +104,11 @@ function onSignIn(user) {
 			signOut();
 		} else {
 			showError(null);
-			var redirect = "/list";
+			var url = "/signin?token=" + user.getAuthResponse().id_token;
 			if (location.search.length > 1) {
-				redirect = location.search.slice(1);
+				url += "&redirect=" + encodeURI(location.search.slice(1));
 			}
-			if (redirect.endsWith("?")) {
-				redirect += "token="
-			} else if (redirect.indexOf("?") != -1) {
-				redirect += "&token="
-			} else  {
-				redirect += "?token="
-			}
-			location.href = redirect + user.getAuthResponse().id_token;			
+			location.href = url;
 		}
 	} else {
 		signOut();

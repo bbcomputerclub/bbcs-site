@@ -66,9 +66,9 @@ func processBlocks (indata []byte, action string) []byte {
 	}
 }
 
-func process(in []byte, user UserData, entry *DBEntry, entryIndex int, token string) ([]byte, error) {
+func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, error) {
 	action := ""
-	if entryIndex < 0 ||  entry == nil {
+	if entryIndex < 0 || entry == nil {
 		action = ACTION_ADD
 	} else if entry.Editable() {
 		action = ACTION_EDIT
@@ -99,9 +99,6 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int, token str
 			}
 			if cmd[1] == "email" {
 				return []byte(user.Email)
-			}
-			if cmd[1] == "token" {
-				return []byte(token)
 			}
 			if cmd[1] == "total" {
 				return []byte(fmt.Sprint(DBTotal(user.Email)))
@@ -158,7 +155,7 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int, token str
 			out := ""
 			for i, entry := range DBList(user.Email) {
 				if entry != nil {
-					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", token, "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
+					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name,  "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
 				}
 			}
 			return []byte(out)

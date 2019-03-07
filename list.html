@@ -22,13 +22,13 @@
 		<div class="title">
 			<h1 style="flex-grow:1">[[user name]]'s <span class="hide-small">community service</span> hours</h1>
 			<span>[[user email]]</span>
-			<a href="/#signout" class="button light">Sign out</a>		
+			<a href="/signout" class="button light">Sign out</a>		
 		</div>
 		<main style="background:#aaa;color:#fff"><b>Total</b> <b style="float:right">[[user total]]</b></main>
 		<ul class="list linked">[[repeat
-			<li><a href="/edit?token=[token]&entry=[index]">[name]
+			<li><a href="/edit?entry=[index]">[name]
 			<span style="float:right">[hours]</span></a></li>
 		]]</ul>
-		<a href="/add?token=[[user token]]" class="button strong corner">Add</a>		
+		<a href="/add" class="button strong corner">Add</a>		
    </body>
 </html>
