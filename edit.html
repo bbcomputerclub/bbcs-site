@@ -19,8 +19,12 @@
 		<link rel="manifest" href="/manifest.json">
 	</head>
 	<body>
-		<!-- Will change to something like /submit.html that will update database & redirect to /list.html -->
-		<form action="/update" method="GET">
+		<!--[ifnot View
+			<form action="/update" method="GET">
+		]-->
+		<!--[if View
+			<form action="/add" method="GET">			
+		]-->
 			<div class="title">
 				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="[[entry name]]" required [[entry disabled]]></h1>
 				<span>[[user email]]</span>	
@@ -50,7 +54,7 @@
 				]-->
 				<!--[if View
 					<a class="button strong" href="/list?token=[[user token]]" style="margin-top:8px">Back</a>
-					<button formaction="/add" type="submit" class="button" style="margin-top:8px;float:right">Duplicate</button>
+					<button type="submit" class="button" style="margin-top:8px;float:right">Duplicate</button>
 				]-->
 			</main>
 			</form>

@@ -66,28 +66,19 @@ func processBlocks (indata []byte, action string) []byte {
 	}
 }
 
-func process(in []byte, query url.Values) ([]byte, error) {
-	var re = regexp.MustCompile("(?s)\\[\\[.*?\\]\\]")
-	user, err := getUser(query.Get("token"))
-	if err != nil {
-		return nil, err
+func process(in []byte, user UserData, entry *DBEntry, entryIndex int, token string) ([]byte, error) {
+	action := ""
+	if entryIndex < 0 ||  entry == nil {
+		action = ACTION_ADD
+	} else if entry.Editable() {
+		action = ACTION_EDIT
+	} else {
+		action = ACTION_VIEW
 	}
 
-	var entry *DBEntry = nil
-	var entryIndex int
-	if len(query.Get("entry")) != 0 {
-		entryIndex, err = strconv.Atoi(query.Get("entry"))
-		if err == nil && entryIndex >= 0 {
-			entry = DBGet(user.Email, entryIndex)
-		}
-	}
-	if entry == nil {
-		entry = entryFromQuery(query)
-	}
-
-	in = processBlocks(in, processAction(entry, query))
+	in = processBlocks(in, action)
 	
-	return re.ReplaceAllFunc(in, func (rawcode []byte) []byte {
+	return regexp.MustCompile("(?s)\\[\\[.*?\\]\\]").ReplaceAllFunc(in, func (rawcode []byte) []byte {
 		code := string(rawcode[2:len(rawcode)-2])
 		cmd := strings.Fields(code)
 		if len(cmd) < 1 {
@@ -110,19 +101,19 @@ func process(in []byte, query url.Values) ([]byte, error) {
 				return []byte(user.Email)
 			}
 			if cmd[1] == "token" {
-				return []byte(query.Get("token"))
+				return []byte(token)
 			}
 			if cmd[1] == "total" {
 				return []byte(fmt.Sprint(DBTotal(user.Email)))
 			}
 			return nil
 		case "entry":
-			if len(cmd) != 2 { return nil }
+			if len(cmd) != 2 || entry == nil { return nil }
 			if cmd[1] == "name" { 
 				return []byte(entry.Name)
 			}
 			if cmd[1] == "index" { 
-				return []byte(query.Get("entry"))
+				return []byte(fmt.Sprint(entryIndex))
 			}
 			if cmd[1] == "hours" { 
 				return []byte(fmt.Sprint(entry.Hours))
@@ -152,22 +143,22 @@ func process(in []byte, query url.Values) ([]byte, error) {
 				}
 			}
 			if cmd[1] == "action" {
-				return []byte(processAction(entry, query))
+				return []byte(action)
 			}
 			if cmd[1] == "disabled" {
-				if processAction(entry, query) != "View" {
+				if action != ACTION_VIEW {
 					return nil
 				} else {
 					return []byte("disabled")
 				}
 			}
 			return nil
-		case "repeat":
+		case "repeat": // TODO: Change to block
 			html := strings.Trim(code[6:], " \t\n")
 			out := ""
 			for i, entry := range DBList(user.Email) {
 				if entry != nil {
-					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", query.Get("token"), "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
+					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name, "[token]", token, "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
 				}
 			}
 			return []byte(out)

@@ -14,6 +14,17 @@ import (
 	"os"
 )
 
+const (
+	ACTION_VIEW = "View"
+	ACTION_EDIT = "Edit"
+	ACTION_ADD = "Add"
+)
+
+type UserData struct {
+	Name string
+	Email string
+}
+
 func entryFromQuery(query url.Values) *DBEntry {
 	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
 	if err != nil {
@@ -40,9 +51,21 @@ func entryFromQuery(query url.Values) *DBEntry {
 	}
 }
 
-type UserData struct {
-	Name string
-	Email string
+func dataFromQuery(query url.Values) (UserData, *DBEntry, int, string) {
+	user, err := getUser(query.Get("token"))
+	if err != nil {
+		return UserData{}, nil, 0, ""
+	}
+
+	var entry *DBEntry = nil
+	var entryIndex int
+	if entryIndex, err := strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
+		entry = DBGet(user.Email, entryIndex)
+	} else {
+		entry = entryFromQuery(query)
+		entryIndex = -1
+	}	
+	return user, entry, entryIndex, query.Get("token")
 }
 
 /* Passes token through Google servers to validate it */
@@ -199,7 +222,12 @@ func main() {
 			return
 		}
 
-		if res, err := process(body, r.URL.Query());  err == nil {
+		user, entry, entryIndex, token := dataFromQuery(r.URL.Query())
+		if user.Email == "" {
+			w.WriteHeader(403)
+			return
+		}
+		if res, err := process(body, user, entry, entryIndex, token);  err == nil {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
@@ -218,13 +246,19 @@ func main() {
 			return
 		}
 		
-		if res, err := process(body, r.URL.Query());  err == nil {
+		user, entry, entryIndex, token := dataFromQuery(r.URL.Query())
+		if user.Email == "" {
+			w.WriteHeader(403)
+			return
+		}
+		if res, err := process(body, user, entry, entryIndex, token);  err == nil {
 			w.Header().Set("Content-Type", "text/html")
 			w.Write(res)
 		} else {
+			// If there was an error, redirect to the login page
 			query := r.URL.Query()
 			query.Del("token")
-			w.Header().Set("Location", "/?edit?" + query.Encode() + "#error:" + err.Error())
+			w.Header().Set("Location", "/?list?" + query.Encode() + "#error:" + err.Error())
 			w.WriteHeader(302)
 		}
 	})
