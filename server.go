@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
-	"net"
+	"math/rand"
 )
 
 const (
@@ -52,10 +52,10 @@ func entryFromQuery(query url.Values) *DBEntry {
 	}
 }
 
-func dataFromQuery(query url.Values, ip string) (UserData, *DBEntry, int) {
-	user, err := getUser(signinMap[ip])
+func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
+	user, err := getUser(signinMap[sid])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't find user with ip: " + ip)
+		fmt.Fprintln(os.Stderr, "Couldn't find user with sid: " + sid)
 		return UserData{}, nil, 0
 	}
 
@@ -109,21 +109,16 @@ func getUser(token string) (UserData, error) {
 	return out, nil
 }
 
-func getIP(r *http.Request) string {
-	ipstr := r.Header.Get("X-Forwarded-For")
-	if ipstr == "" {
-		ipstr = r.RemoteAddr
-	}
-	iphost, _, err := net.SplitHostPort(ipstr)
-	if err != nil {
-		return ""
-	}
-
-	return iphost
-}
-
 // Maps IP address to tokens - IP address is the computer, token is the Google token (see #11)
 var signinMap = make(map[string]string)
+
+func signinGen() string {
+	out := strconv.FormatInt(rand.Int63n(60466176), 36)
+	if signinMap[out] != "" {
+		return signinGen() // try again
+	}
+	return out
+}
 
 func main() {
 	/* Static pages */
@@ -211,41 +206,41 @@ func main() {
 
 	/* Dynamic pages */
 	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
-		ip := getIP(r)
-		if ip == "" {
-			w.WriteHeader(400)
-			return
-		}
+		sid := signinGen()
 
-		signinMap[ip] = r.URL.Query().Get("token")
+		signinMap[sid] = r.URL.Query().Get("token")
 		redirect := r.URL.Query().Get("redirect")
 		if redirect == "" {
 			redirect = "/list"
 		}
 
+		http.SetCookie(w, &http.Cookie{Name:"sid", Value:sid})
 		w.Header().Set("Location", redirect)
 		w.WriteHeader(303)
 	})
 
 	http.HandleFunc("/signout", func (w http.ResponseWriter, r *http.Request) {
-		ip := getIP(r)
-		if ip == "" {
+		sidC, err := r.Cookie("sid")
+		if err != nil {
 			w.WriteHeader(400)
-			return
+			return			
 		}
-		
-		delete(signinMap, ip)
+		sid := sidC.Value
+	
+		delete(signinMap, sid)
 
+		http.SetCookie(w, &http.Cookie{Name:"sid",Value:"",MaxAge:-1})
 		w.Header().Set("Location", "/#signout")
 		w.WriteHeader(303)
 	})
 	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
-		ip := getIP(r)
-		if ip == "" {
-			w.WriteHeader(400)
+		sidC, err := r.Cookie("sid")
+		if err != nil {
+			w.WriteHeader(403)
 			return
 		}
+		sid := sidC.Value
 
 		body, err := ioutil.ReadFile("list.html")
 		if err != nil {
@@ -253,7 +248,7 @@ func main() {
 			return
 		}
 
-		user, entry, entryIndex := dataFromQuery(r.URL.Query(), ip)
+		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
 		if user.Email == "" {
 			w.WriteHeader(403)
 			return
@@ -271,11 +266,12 @@ func main() {
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
-		ip := getIP(r)
-		if ip == "" {
-			w.WriteHeader(400)
+		sidC, err := r.Cookie("sid")
+		if err != nil {
+			w.WriteHeader(403)
 			return
 		}
+		sid := sidC.Value
 
 		body, err := ioutil.ReadFile("edit.html")
 		if err != nil {
@@ -283,8 +279,10 @@ func main() {
 			return
 		}
 		
-		user, entry, entryIndex := dataFromQuery(r.URL.Query(), ip)
+		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
 		if user.Email == "" {
+			// Redirect
+
 			w.WriteHeader(403)
 			return
 		}
@@ -310,14 +308,15 @@ func main() {
 	// Updates an entry
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-	
-		ip := getIP(r)
-		if ip == "" {
-			w.WriteHeader(400)
+
+		sidC, err := r.Cookie("sid")
+		if err != nil {
+			w.WriteHeader(403)
 			return
 		}
+		sid := sidC.Value
 		
-		user, err := getUser(signinMap[ip])
+		user, err := getUser(signinMap[sid])
 		if err != nil {
 			w.WriteHeader(400)
 			return
@@ -354,13 +353,14 @@ func main() {
 	http.HandleFunc("/delete", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 	
-		ip := getIP(r)
-		if ip == "" {
-			w.WriteHeader(400)
+		sidC, err := r.Cookie("sid")
+		if err != nil {
+			w.WriteHeader(403)
 			return
 		}
+		sid := sidC.Value
 
-		user, err := getUser(signinMap[ip])
+		user, err := getUser(signinMap[sid])
 		if err != nil {
 			w.WriteHeader(400)
 			return
