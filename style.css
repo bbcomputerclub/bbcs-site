@@ -10,6 +10,7 @@ body {
     color: #FFF;
 	display: flex;
 	align-items: center;
+	position:fixed;top:0;left:0;right:0;
 }
 	.title > a, .title > span {
 		color: #FFF;
@@ -32,6 +33,7 @@ body {
 		/* Compensate for border */
 		margin-bottom: -2px;
 	}
+	.title-spacer {height: 54px;}
 
 .list {
 	padding: 0;
