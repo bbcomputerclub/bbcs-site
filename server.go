@@ -26,6 +26,7 @@ type UserData struct {
 	Email string
 }
 
+/* Creates an entry from url parameters */
 func entryFromQuery(query url.Values) *DBEntry {
 	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
 	if err != nil {
@@ -52,6 +53,7 @@ func entryFromQuery(query url.Values) *DBEntry {
 	}
 }
 
+/* Returns stuff needed for `process()` */
 func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
 	user, err := getUser(signinMap[sid])
 	if err != nil {
@@ -109,9 +111,9 @@ func getUser(token string) (UserData, error) {
 	return out, nil
 }
 
-// Maps IP address to tokens - IP address is the computer, token is the Google token (see #11)
+/* Maps session IDs to tokens */
 var signinMap = make(map[string]string)
-
+/* Generates a session ID */
 func signinGen() string {
 	out := strconv.FormatInt(rand.Int63n(60466176), 36)
 	if signinMap[out] != "" {
@@ -311,7 +313,14 @@ func main() {
 
 	// Updates an entry
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
+		if r.Method != "POST" && r.Method != "PUT" {
+			w.Header().Set("Allow", "POST, PUT")
+			w.WriteHeader(405)
+			return			
+		}
+	
+		r.ParseForm()
+		query := r.PostForm
 
 		sidC, err := r.Cookie("sid")
 		if err != nil {
@@ -322,7 +331,7 @@ func main() {
 		
 		user, err := getUser(signinMap[sid])
 		if err != nil {
-			w.WriteHeader(400)
+			w.WriteHeader(403)
 			return
 		}
 		index, err := strconv.Atoi(query.Get("entry"))
@@ -355,7 +364,14 @@ func main() {
 
 	// Removes an entry
 	http.HandleFunc("/delete", func (w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
+		if r.Method != "POST" && r.Method != "DELETE" {
+			w.Header().Set("Allow", "POST, DELETE")
+			w.WriteHeader(405)
+			return			
+		}
+
+		r.ParseForm()
+		query := r.PostForm
 	
 		sidC, err := r.Cookie("sid")
 		if err != nil {
@@ -366,7 +382,7 @@ func main() {
 
 		user, err := getUser(signinMap[sid])
 		if err != nil {
-			w.WriteHeader(400)
+			w.WriteHeader(403)
 			return
 		}
 		index, err := strconv.Atoi(query.Get("entry"))

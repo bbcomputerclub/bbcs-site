@@ -20,7 +20,7 @@
 	</head>
 	<body>
 		<!--[ifnot View
-			<form action="/update" method="GET">
+			<form action="/update" method="POST">
 		]-->
 		<!--[if View
 			<form action="/add" method="GET">			
@@ -48,8 +48,8 @@
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
 					<a class="button" style="margin-top:8px;margin-left:8px;float:right" href="/list">Cancel</a> 
 					<!--[if Edit
-						<button formaction="/add" type="submit" class="button" style="margin-top:8px;margin-left:8px;float:right">Duplicate</button>
-						<a href="/delete?entry=[[entry index]]" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</a>
+						<button formaction="/add" formmethod="GET" type="submit" class="button" style="margin-top:8px;margin-left:8px;float:right">Duplicate</button>
+						<button formaction="/delete" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
 					]-->
 				]-->
 				<!--[if View
