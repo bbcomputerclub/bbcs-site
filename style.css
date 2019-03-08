@@ -11,6 +11,7 @@ body {
 	display: flex;
 	align-items: center;
 	position:fixed;top:0;left:0;right:0;
+	line-height: 24px; /* 56 (height) - 16*2 (padding) */
 }
 	.title > a, .title > span {
 		color: #FFF;
@@ -33,7 +34,7 @@ body {
 		/* Compensate for border */
 		margin-bottom: -2px;
 	}
-	.title-spacer {height: 54px;}
+	.title-spacer {height:56px;}
 
 .list {
 	padding: 0;
