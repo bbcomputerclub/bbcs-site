@@ -57,7 +57,7 @@ func entryFromQuery(query url.Values) *DBEntry {
 func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
 	user, err := getUser(signinMap[sid])
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't find user with sid: " + sid)
+		fmt.Fprintln(os.Stderr, "Couldn't find user with session id: " + sid)
 		return UserData{}, nil, 0
 	}
 
@@ -115,7 +115,7 @@ func getUser(token string) (UserData, error) {
 var signinMap = make(map[string]string)
 /* Generates a session ID */
 func signinGen() string {
-	out := strconv.FormatInt(rand.Int63n(60466176), 36)
+	out := strconv.FormatInt(rand.Int63(), 36)
 	if signinMap[out] != "" {
 		return signinGen() // try again
 	}
@@ -123,6 +123,8 @@ func signinGen() string {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	/* Static pages */
 	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -216,7 +218,7 @@ func main() {
 			redirect = "/list"
 		}
 
-		http.SetCookie(w, &http.Cookie{Name:"sid", Value:sid})
+		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID", Value:sid, HttpOnly:true})
 
 		redirectEsc, err := url.PathUnescape(redirect)
 		if err != nil {
@@ -228,7 +230,7 @@ func main() {
 	})
 
 	http.HandleFunc("/signout", func (w http.ResponseWriter, r *http.Request) {
-		sidC, err := r.Cookie("sid")
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil {
 			w.WriteHeader(400)
 			return			
@@ -237,13 +239,13 @@ func main() {
 	
 		delete(signinMap, sid)
 
-		http.SetCookie(w, &http.Cookie{Name:"sid",Value:"",MaxAge:-1})
+		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID",Value:"",MaxAge:-1})
 		w.Header().Set("Location", "/#signout")
 		w.WriteHeader(303)
 	})
 	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
-		sidC, err := r.Cookie("sid")
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil {
 			w.Header().Set("Location", "/#error:Not%20signed%20in")		
 			w.WriteHeader(303)
@@ -274,7 +276,7 @@ func main() {
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
-		sidC, err := r.Cookie("sid")
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil { 
 			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:Not%20signed%20in")		
 			w.WriteHeader(303)
@@ -322,7 +324,7 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 
-		sidC, err := r.Cookie("sid")
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil {
 			w.WriteHeader(403)
 			return
@@ -373,7 +375,7 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 	
-		sidC, err := r.Cookie("sid")
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil {
 			w.WriteHeader(403)
 			return
