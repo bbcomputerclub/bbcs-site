@@ -215,7 +215,13 @@ func main() {
 		}
 
 		http.SetCookie(w, &http.Cookie{Name:"sid", Value:sid})
-		w.Header().Set("Location", redirect)
+
+		redirectEsc, err := url.PathUnescape(redirect)
+		if err != nil {
+			w.Header().Set("Location", "/list")
+		} else {
+			w.Header().Set("Location", redirectEsc)
+		}
 		w.WriteHeader(303)
 	})
 
@@ -237,7 +243,8 @@ func main() {
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
 		sidC, err := r.Cookie("sid")
 		if err != nil {
-			w.WriteHeader(403)
+			w.Header().Set("Location", "/#error:Not%20signed%20in")		
+			w.WriteHeader(303)
 			return
 		}
 		sid := sidC.Value
@@ -250,7 +257,8 @@ func main() {
 
 		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
 		if user.Email == "" {
-			w.WriteHeader(403)
+			w.Header().Set("Location", "/#error:Not%20signed%20in")		
+			w.WriteHeader(303)
 			return
 		}
 		if res, err := process(body, user, entry, entryIndex);  err == nil {
@@ -258,17 +266,16 @@ func main() {
 			w.Write(res)
 		} else {
 			// If there was an error, redirect to the login page
-			query := r.URL.Query()
-			query.Del("token")
-			w.Header().Set("Location", "/?list?" + query.Encode() + "#error:" + err.Error())
-			w.WriteHeader(302)
+			w.Header().Set("Location", "/#error:" + err.Error())
+			w.WriteHeader(303)
 		}
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
 		sidC, err := r.Cookie("sid")
-		if err != nil {
-			w.WriteHeader(403)
+		if err != nil { 
+			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:Not%20signed%20in")		
+			w.WriteHeader(303)
 			return
 		}
 		sid := sidC.Value
@@ -281,9 +288,8 @@ func main() {
 		
 		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
 		if user.Email == "" {
-			// Redirect
-
-			w.WriteHeader(403)
+			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:Not%20signed%20in")
+			w.WriteHeader(303)			
 			return
 		}
 		if res, err := process(body, user, entry, entryIndex);  err == nil {
@@ -291,10 +297,8 @@ func main() {
 			w.Write(res)
 		} else {
 			// If there was an error, redirect to the login page
-			query := r.URL.Query()
-			query.Del("token")
-			w.Header().Set("Location", "/?list?" + query.Encode() + "#error:" + err.Error())
-			w.WriteHeader(302)
+			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:" + err.Error())
+			w.WriteHeader(303)
 		}
 	})
 
@@ -345,7 +349,7 @@ func main() {
 		DBSet(user.Email, newEntry, index)
 
 		// Redirect
-		w.Header().Set("Location", "/list?token=" + query.Get("token"))
+		w.Header().Set("Location", "/list")
 		w.WriteHeader(302)
 	})
 
@@ -379,7 +383,7 @@ func main() {
 
 		DBRemove(user.Email, index)
 	
-		w.Header().Set("Location", "/list?token=" + query.Get("token"))
+		w.Header().Set("Location", "/list")
 		w.WriteHeader(303)
 	})
 

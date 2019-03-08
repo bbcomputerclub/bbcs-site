@@ -116,11 +116,9 @@ function onSignIn(user) {
 }
 
 if (location.hash.startsWith("#error:")) {
-	showError(location.hash.slice(7));
+	showError(decodeURIComponent(location.hash.slice(7)));
 }
 		</script>
 		<script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>		
 	</body>
 </html>
-
-
