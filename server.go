@@ -53,6 +53,18 @@ func entryFromQuery(query url.Values) *DBEntry {
 	}
 }
 
+func entryToQuery(entry *DBEntry) url.Values {
+	out := url.Values{}
+	out.Set("name", entry.Name)
+	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
+	out.Set("date", entry.Date.Format("2006-01-02"))
+	out.Set("org", entry.Organization)
+	out.Set("contactname", entry.ContactName)
+	out.Set("contactemail", entry.ContactEmail)
+	out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
+	return out
+}
+
 /* Returns stuff needed for `process()` */
 func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
 	user, ok := signinMap[sid]
@@ -289,7 +301,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
+	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) {
 		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil { 
 			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:Not%20signed%20in")		
@@ -326,6 +338,41 @@ func main() {
 		w.Header().Set("Location", "/edit?" + query.Encode())
 		w.WriteHeader(302)
 	})
+
+	http.HandleFunc("/duplicate", func (w http.ResponseWriter, r *http.Request) {
+		sidC, err := r.Cookie("BBCS_SESSION_ID")
+		if err != nil {
+			w.Header().Set("Refresh", "0;url=/#error:Not%20signed%20in")		
+			w.WriteHeader(403)
+			return
+		}
+		sid := sidC.Value
+	
+		user, ok := signinMap[sid]
+		if !ok {
+			w.Header().Set("Refresh", "0;url=/#error:Not%20signed%20in")
+			w.WriteHeader(403)
+			return
+		}
+
+		entryIndex, err := strconv.Atoi(r.URL.Query().Get("entry"))
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+		entry := DBGet(user.Email, entryIndex)
+		if entry == nil {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(400)
+			io.WriteString(w, "Entry #" + r.URL.Query().Get("entry") + " does not exist")		
+			return
+		}
+
+		query := entryToQuery(entry)
+		query.Set("entry", "-1")
+		w.Header().Set("Location", "/edit?" + query.Encode())
+		w.WriteHeader(303)
+	});
 
 	// Updates an entry
 	http.HandleFunc("/update", func (w http.ResponseWriter, r *http.Request) {

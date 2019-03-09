@@ -20,10 +20,7 @@
 	</head>
 	<body>
 		<!--[ifnot View
-			<form action="/update" method="POST">
-		]-->
-		<!--[if View
-			<form action="/add" method="GET">			
+		<form action="/update" method="POST">
 		]-->
 			<div class="title">
 				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="[[entry name]]" required [[entry disabled]]></h1>
@@ -46,17 +43,21 @@
 				</div>
 				<!--[ifnot View
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
-					<a class="button" style="margin-top:8px;margin-left:8px;float:right" href="/list">Cancel</a> 
-					<!--[if Edit
-						<button formaction="/add" formmethod="GET" type="submit" class="button" style="margin-top:8px;margin-left:8px;float:right">Duplicate</button>
-						<button formaction="/delete" class="button" style="margin-top:8px;float:right" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
-					]-->
+					<span style="float:right;margin-top:8px">
+						<!--[if Edit
+							<button formaction="/delete" class="button" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>						
+							<a class="button" href="/duplicate?entry=[[entry index]]" style="margin-left:8px">Duplicate</a>
+						]-->
+						<a class="button" style="margin-left:8px" href="/list">Cancel</a> 
+					</span>
 				]-->
 				<!--[if View
 					<a class="button strong" href="/list" style="margin-top:8px">Back</a>
-					<button type="submit" class="button" style="margin-top:8px;float:right">Duplicate</button>
+					<a class="button" href="/duplicate?entry=[[entry index]]" style="margin-top:8px;float:right">Duplicate</a>
 				]-->
 			</main>
+			<!--[ifnot View
 			</form>
+			]-->
 	</body>
 </html>
