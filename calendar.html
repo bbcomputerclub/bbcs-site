@@ -3,8 +3,6 @@
     <head>
         <title>Google 9th Grade Testing Calendar</title>
         <meta charset="utf-8" />
-    </head>
-    <head>
         <meta charset="utf8">
         <link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
         <link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
@@ -19,16 +17,19 @@
         <meta name="theme-color" content="#26428b">
     </head>
     <body>
-        <p>Google 9th Grade Testing Calendar</p>
-        
-        <!--Add buttons to initiate auth sequence and sign out-->
-        <button id="authorize_button" style="display: none;">Authorize</button>
-        <button id="signout_button" style="display: none;">Sign Out</button>
-        
+		<div class="title" style="background: #f44336">
+			<h1>Test: 9th Grade Testing Calendar</h1>
+		</div>
+		<div class="title-spacer"></div>		
+
+		<main>
+	        <button class="button" onclick="authenticate().then(loadClient)">Sign in</button>
+	        <button class="button" onclick="listUpcomingEvents()">List</button>
         <pre id="content" style="white-space: pre-wrap;"></pre>
         <table id="table">
         </table>
-        
+   		</main>
+ 
         <script type="text/javascript">
             // Client ID and API key from the Developer Console
             var CLIENT_ID = '561583129167-7dooaa095vi5epemh4uld1ppi0varcj4.apps.googleusercontent.com';
@@ -138,8 +139,6 @@
              'orderBy': 'startTime'
              }).then(function(response) {
                  var events = response.result.items;
-                 createEventsTable('Upcoming events:');
-                 
                  if (events.length > 0) {
                  for (i = 0; i < events.length; i++) {
                  var event = events[i];
@@ -180,8 +179,6 @@
                 gapi.auth2.init({client_id: "561583129167-7dooaa095vi5epemh4uld1ppi0varcj4.apps.googleusercontent.com"});
             });
         </script>
-        <button onclick="authenticate().then(loadClient)">authorize and load</button>
-        <button onclick="listUpcomingEvents()">List Upcoming Events</button>
         <style>
             table {
                 font-family: arial, sans-serif;
