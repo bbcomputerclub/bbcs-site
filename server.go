@@ -208,7 +208,13 @@ func main() {
 	})
 
 
-	/* Dynamic pages */
+	/* GET /signin
+	 *
+	 * Signs the user in.
+	 * Parameters:
+	 * 	  token: The token
+	 *    redirect: An escaped URI
+	 */
 	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
 		sid := signinGen()
 
@@ -220,7 +226,7 @@ func main() {
 
 		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID", Value:sid, HttpOnly:true})
 
-		redirectEsc, err := url.PathUnescape(redirect)
+		redirectEsc, err := url.QueryUnescape(redirect)
 		if err != nil {
 			w.Header().Set("Location", "/list")
 		} else {
@@ -270,7 +276,7 @@ func main() {
 			w.Write(res)
 		} else {
 			// If there was an error, redirect to the login page
-			w.Header().Set("Location", "/#error:" + err.Error())
+			w.Header().Set("Location", "/#error:" + url.QueryEscape(err.Error()))
 			w.WriteHeader(303)
 		}
 	})
@@ -278,7 +284,7 @@ func main() {
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) { 	
 		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil { 
-			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:Not%20signed%20in")		
+			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:Not%20signed%20in")		
 			w.WriteHeader(303)
 			return
 		}
@@ -292,7 +298,7 @@ func main() {
 		
 		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
 		if user.Email == "" {
-			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:Not%20signed%20in")
+			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:Not%20signed%20in")
 			w.WriteHeader(303)			
 			return
 		}
@@ -301,7 +307,7 @@ func main() {
 			w.Write(res)
 		} else {
 			// If there was an error, redirect to the login page
-			w.Header().Set("Location", "/?%2Fedit%3Fentry%3D" + r.URL.Query().Get("entry") + "#error:" + err.Error())
+			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:" + url.QueryEscape(err.Error()))
 			w.WriteHeader(303)
 		}
 	})
