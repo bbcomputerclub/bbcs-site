@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Google 9tth Grade Testing Calendar</title>
+        <title>Google 9th Grade Testing Calendar</title>
         <meta charset="utf-8" />
     </head>
     <head>
@@ -70,7 +70,7 @@
                                      authorizeButton.onclick = handleAuthClick;
                                      signoutButton.onclick = handleSignoutClick;
                                      }, function(error) {
-                                     appendPre(JSON.stringify(error, null, 2));
+                                     createEventsTable(JSON.stringify(error, null, 2));
                                      });
         }
         
@@ -137,49 +137,49 @@
              'singleEvents': true,
              'orderBy': 'startTime'
              }).then(function(response) {
-                     var events = response.result.items;
-                     appendPre('Upcoming events:');
-                     
-                     if (events.length > 0) {
-                     for (i = 0; i < events.length; i++) {
-                     var event = events[i];
-                     var when = event.start.dateTime;
-                     if (!when) {
-                     when = event.start.date;
-                     }
-                     createEventsTable(event.summary + ' (' + when + ')')
-                     }
-                     } else {
-                     createEventsTable('No upcoming events found.');
-                     }
-                     });
+                 var events = response.result.items;
+                 createEventsTable('Upcoming events:');
+                 
+                 if (events.length > 0) {
+                 for (i = 0; i < events.length; i++) {
+                 var event = events[i];
+                 var when = event.start.dateTime;
+                 if (!when) {
+                 when = event.start.date;
+                 }
+                 createEventsTable(event.summary + ' (' + when + ')')
+                 }
+                 } else {
+                 createEventsTable('No upcoming events found.');
+                 }
+            });
         }
         
             </script>
         
         <script src="https://apis.google.com/js/api.js"></script>
         <script>
-            /**
-             * Sample JavaScript code for calendar.events.insert
-             * See instructions for running APIs Explorer code samples locally:
-             * https://developers.google.com/explorer-help/guides/code_samples#javascript
-             */
+                /**
+                 * Sample JavaScript code for calendar.events.insert
+                 * See instructions for running APIs Explorer code samples locally:
+                 * https://developers.google.com/explorer-help/guides/code_samples#javascript
+                 */
         
-        function authenticate() {
-            return gapi.auth2.getAuthInstance()
-            .signIn({scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events"})
-            .then(function() { console.log("Sign-in successful"); },
-                  function(err) { console.error("Error signing in", err); });
-        }
-        function loadClient() {
-            return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest")
-            .then(function() { console.log("GAPI client loaded for API"); },
-                  function(err) { console.error("Error loading GAPI client for API", err); });
-        }
-        gapi.load("client:auth2", function() {
-                  gapi.auth2.init({client_id: "561583129167-7dooaa095vi5epemh4uld1ppi0varcj4.apps.googleusercontent.com"});
-                  });
-            </script>
+            function authenticate() {
+                return gapi.auth2.getAuthInstance()
+                .signIn({scope: "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events"})
+                .then(function() { console.log("Sign-in successful"); },
+                function(err) { console.error("Error signing in", err); });
+            }
+            function loadClient() {
+                return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/calendar/v3/rest")
+                .then(function() { console.log("GAPI client loaded for API"); },
+                function(err) { console.error("Error loading GAPI client for API", err); });
+            }
+            gapi.load("client:auth2", function() {
+                gapi.auth2.init({client_id: "561583129167-7dooaa095vi5epemh4uld1ppi0varcj4.apps.googleusercontent.com"});
+            });
+        </script>
         <button onclick="authenticate().then(loadClient)">authorize and load</button>
         <button onclick="listUpcomingEvents()">List Upcoming Events</button>
         <style>
@@ -188,16 +188,14 @@
                 border-collapse: collapse;
                 width: 100%;
             }
-        
-        td, th {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #dddddd;
-        }
+            td, th {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+            tr:nth-child(even) {
+                background-color: #dddddd;
+            }
         </style>
 </html>
 
