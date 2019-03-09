@@ -21,6 +21,7 @@
     <div class="title">
         <h1>Link Generator</h1>
     </div>
+    <div class="title-spacer"></div>
     <main>
         <input id="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" required></h1>
         <div class="flex flex-sm">
@@ -47,17 +48,41 @@
 	}
 
     function createLink() {
-            var name = document.getElementById("name").value.trim().replace(/\s/g,'+')
-            var hours = document.getElementById("hours").value.trim().replace(/\s/g,'+')
-            var date= document.getElementById("date").value.trim().replace(/\s/g,'+')
-            var org = document.getElementById("org").value.trim().replace(/\s/g,'+')
-            var contactname = document.getElementById("contactname").value.trim().replace(/\s/g,'+')
-            var contactemail = document.getElementById("contactemail").value.trim().replace(/\s/g,'+')
-            var contactphone = document.getElementById("contactphone").value.trim().replace(/-/g,'')
-            var link = "https://bbcs.localtunnel.me/add?name=" + name + "&hours=" + hours + "&date=" + date + "&org=" + org + "&contactname=" + contactname + "&contactemail=" + contactemail + "&contactphone=" + contactphone
-            document.getElementById("out").innerHTML = link
-            document.getElementById("out").href = link
-        }
+	    var name = encodeURIComponent(document.getElementById("name").value.trim())
+	    var hours = Number(document.getElementById("hours").value);
+	    var date= encodeURIComponent(document.getElementById("date").value.trim())
+	    var org = encodeURIComponent(document.getElementById("org").value.trim())
+	    var contactname = encodeURIComponent(document.getElementById("contactname").value.trim())
+	    var contactemail = encodeURIComponent(document.getElementById("contactemail").value.trim())
+	    var contactphone = document.getElementById("contactphone").value.trim().replace(/[^0-9]+/g, "")
+	    var link = "https://" + location.host + "/add?";
+		if (name) {
+			link += "name=" + name + "&";
+		}
+		if (!Number.isNaN(hours) && hours > 0) {
+			link += "hours=" + hours + "&";
+		}
+		if (date) {
+			link += "date=" + date + "&";
+		}
+		if (org) {
+			link += "org=" + org + "&";
+		}
+		if (contactname) {
+			link += "contactname=" + contactname + "&";
+		}
+		if (contactemail) {
+			link += "contactemail=" + contactemail + "&";
+		}
+		if (contactphone) {
+			link += "contactphone=" + contactphone + "&";
+		}
+
+		document.getElementById("out").innerHTML = link
+		document.getElementById("out").href = link
+	}
+
+	createLink();
 </script>
 </body>
 </html>
