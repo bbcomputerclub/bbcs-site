@@ -55,14 +55,14 @@ func entryFromQuery(query url.Values) *DBEntry {
 
 /* Returns stuff needed for `process()` */
 func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
-	user, err := getUser(signinMap[sid])
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't find user with session id: " + sid)
-		return UserData{}, nil, 0
+	user, ok := signinMap[sid]
+	if !ok {
+		return UserData{}, nil, -1
 	}
 
 	var entry *DBEntry = nil
 	var entryIndex int
+	var err error
 	if entryIndex, err = strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
 		entry = DBGet(user.Email, entryIndex)
 	} else {
@@ -112,11 +112,11 @@ func getUser(token string) (UserData, error) {
 }
 
 /* Maps session IDs to tokens */
-var signinMap = make(map[string]string)
+var signinMap = make(map[string]UserData)
 /* Generates a session ID */
 func signinGen() string {
 	out := strconv.FormatInt(rand.Int63(), 36)
-	if signinMap[out] != "" {
+	if _, ok := signinMap[out]; ok { // if seesion id already is a thing
 		return signinGen() // try again
 	}
 	return out
@@ -218,7 +218,15 @@ func main() {
 	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
 		sid := signinGen()
 
-		signinMap[sid] = r.URL.Query().Get("token")
+		user, err := getUser(r.URL.Query().Get("token"))
+		if err != nil {
+			w.Header().Set("Refresh", "0; url=/#error:" + url.QueryEscape(err.Error()))
+			w.WriteHeader(403)
+			return
+		}
+
+		signinMap[sid] = user
+
 		redirect := r.URL.Query().Get("redirect")
 		if redirect == "" {
 			redirect = "/list"
@@ -337,8 +345,8 @@ func main() {
 		}
 		sid := sidC.Value
 		
-		user, err := getUser(signinMap[sid])
-		if err != nil {
+		user, ok := signinMap[sid]
+		if !ok {
 			w.WriteHeader(403)
 			return
 		}
@@ -388,8 +396,8 @@ func main() {
 		}
 		sid := sidC.Value
 
-		user, err := getUser(signinMap[sid])
-		if err != nil {
+		user, ok := signinMap[sid]
+		if !ok {
 			w.WriteHeader(403)
 			return
 		}
