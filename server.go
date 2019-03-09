@@ -219,6 +219,10 @@ func main() {
 		w.WriteHeader(301)
 	})
 
+	http.HandleFunc("/calendar", func (w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "calendar.html")
+	})
+
 
 	/* GET /signin
 	 *
