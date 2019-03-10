@@ -24,6 +24,7 @@ const (
 type UserData struct {
 	Name string
 	Email string
+	Admin bool
 }
 
 /* Creates an entry from url parameters */
@@ -65,24 +66,60 @@ func entryToQuery(entry *DBEntry) url.Values {
 	return out
 }
 
-/* Returns stuff needed for `process()` */
-func dataFromQuery(query url.Values, sid string) (UserData, *DBEntry, int) {
+func processAndServe(w http.ResponseWriter, r *http.Request, file string) {
+	sidC, err := r.Cookie("BBCS_SESSION_ID")
+	if err != nil {
+		w.Header().Set("Location", "/#error:Not%20signed%20in")		
+		w.WriteHeader(303)
+		return
+	}
+	sid := sidC.Value
+
+	body, err := ioutil.ReadFile(file)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	query := r.URL.Query()
 	user, ok := signinMap[sid]
 	if !ok {
-		return UserData{}, nil, -1
+		w.Header().Set("Location", "/?" + url.QueryEscape(r.URL.String()) + "#error:Not%20signed%20in")
+		w.WriteHeader(303)
+		return
+	}
+
+	adminOnly := strings.HasPrefix(string(body), "<!-- ADMIN ONLY -->")
+	if adminOnly && !user.Admin {
+		w.WriteHeader(403)
+		return		
+	}
+
+	student := user
+	if user.Admin && len(query["user"]) != 0 {
+		student, err = getUserFromEmail(query.Get("user"))
+		if err != nil {
+			student = user
+		}
 	}
 
 	var entry *DBEntry = nil
 	var entryIndex int
-	var err error
 	if entryIndex, err = strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
-		entry = DBGet(user.Email, entryIndex)
+		entry = DBGet(student.Email, entryIndex)
 	} else {
 		entry = entryFromQuery(query)
 		entryIndex = -1
-	}	
-
-	return user, entry, entryIndex
+	}
+	
+	if res, err := process(body, user, student, entry, entryIndex);  err == nil {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write(res)
+	} else {
+		// If there was an error, redirect to the login page
+		w.Header().Set("Location", "/?" + url.QueryEscape(r.URL.String()) + "#error:" + url.QueryEscape(err.Error()))
+		w.WriteHeader(303)
+	}
 }
 
 /* Passes token through Google servers to validate it */
@@ -112,7 +149,7 @@ func getUser(token string) (UserData, error) {
 	}
 
 	// Create UserData struct; fmt.Sprint converts things to strings (just in case it's not a string)
-	out := UserData{}
+	out := UserData{Admin:false}
 	out.Email = fmt.Sprint(data["email"])
 	if out.Email != "bstarr@blindbrook.org" {
 		out.Name = fmt.Sprint(data["name"])
@@ -120,7 +157,21 @@ func getUser(token string) (UserData, error) {
 		out.Name = "Robert Starr"
 	}
 
+	if adminsData, err := ioutil.ReadFile("admins.txt"); err == nil {
+		for _, line := range strings.Split(string(adminsData), "\n") {
+			if out.Email == line {
+				out.Admin = true
+			}			
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Error reading admins.txt: %s\n", err.Error())
+	}
+
 	return out, nil
+}
+
+func getUserFromEmail (email string) (UserData, error) {
+	return UserData{Email:email, Name:email, Admin:false}, nil
 }
 
 /* Maps session IDs to tokens */
@@ -275,65 +326,15 @@ func main() {
 	})
 	
 	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
-		if err != nil {
-			w.Header().Set("Location", "/#error:Not%20signed%20in")		
-			w.WriteHeader(303)
-			return
-		}
-		sid := sidC.Value
+		processAndServe(w, r, "list.html")
+	})
 
-		body, err := ioutil.ReadFile("list.html")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-
-		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
-		if user.Email == "" {
-			w.Header().Set("Location", "/#error:Not%20signed%20in")		
-			w.WriteHeader(303)
-			return
-		}
-		if res, err := process(body, user, entry, entryIndex);  err == nil {
-			w.Header().Set("Content-Type", "text/html")
-			w.Write(res)
-		} else {
-			// If there was an error, redirect to the login page
-			w.Header().Set("Location", "/#error:" + url.QueryEscape(err.Error()))
-			w.WriteHeader(303)
-		}
+	http.HandleFunc("/admin", func (w http.ResponseWriter, r *http.Request) { 
+		processAndServe(w, r, "admin.html")
 	})
 
 	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) {
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
-		if err != nil { 
-			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:Not%20signed%20in")		
-			w.WriteHeader(303)
-			return
-		}
-		sid := sidC.Value
-
-		body, err := ioutil.ReadFile("edit.html")
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		
-		user, entry, entryIndex := dataFromQuery(r.URL.Query(), sid)
-		if user.Email == "" {
-			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:Not%20signed%20in")
-			w.WriteHeader(303)			
-			return
-		}
-		if res, err := process(body, user, entry, entryIndex);  err == nil {
-			w.Header().Set("Content-Type", "text/html")
-			w.Write(res)
-		} else {
-			// If there was an error, redirect to the login page
-			w.Header().Set("Location", "/?%2Fedit%3F" + url.QueryEscape(r.URL.Query().Encode()) + "#error:" + url.QueryEscape(err.Error()))
-			w.WriteHeader(303)
-		}
+		processAndServe(w, r, "edit.html")		
 	})
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
@@ -351,7 +352,9 @@ func main() {
 			return
 		}
 		sid := sidC.Value
-	
+
+		query := r.URL.Query()
+
 		user, ok := signinMap[sid]
 		if !ok {
 			w.Header().Set("Refresh", "0;url=/#error:Not%20signed%20in")
@@ -359,12 +362,20 @@ func main() {
 			return
 		}
 
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student, err = getUserFromEmail(query.Get("user"))
+			if err != nil {
+				student = user
+			}
+		}
+
 		entryIndex, err := strconv.Atoi(r.URL.Query().Get("entry"))
 		if err != nil {
 			w.WriteHeader(400)
 			return
 		}
-		entry := DBGet(user.Email, entryIndex)
+		entry := DBGet(student.Email, entryIndex)
 		if entry == nil {
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(400)
@@ -372,9 +383,12 @@ func main() {
 			return
 		}
 
-		query := entryToQuery(entry)
-		query.Set("entry", "-1")
-		w.Header().Set("Location", "/edit?" + query.Encode())
+		newQuery := entryToQuery(entry)
+		newQuery.Set("entry", "-1")
+		if user.Admin {
+			newQuery.Set("user", student.Email)
+		}
+		w.Header().Set("Location", "/edit?" + newQuery.Encode())
 		w.WriteHeader(303)
 	});
 
@@ -401,6 +415,15 @@ func main() {
 			w.WriteHeader(403)
 			return
 		}
+
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student, err = getUserFromEmail(query.Get("user"))
+			if err != nil {
+				student = user
+			}
+		}
+
 		index, err := strconv.Atoi(query.Get("entry"))
 		if err != nil {
 			w.WriteHeader(400)
@@ -409,7 +432,7 @@ func main() {
 
 		// Make sure existing entry (if there is one) is editable
 		if index >= 0 {
-			if !DBGet(user.Email, index).Editable() {
+			if !DBGet(student.Email, index).Editable() {
 				w.WriteHeader(403)
 				return
 			}
@@ -422,10 +445,14 @@ func main() {
 		}
 
 		// Make changes
-		DBSet(user.Email, newEntry, index)
+		DBSet(student.Email, newEntry, index)
 
 		// Redirect
-		w.Header().Set("Location", "/list")
+		if !user.Admin {
+			w.Header().Set("Location", "/list")
+		} else {
+			w.Header().Set("Location", "/list?user=" + student.Email)
+		}
 		w.WriteHeader(302)
 	})
 
@@ -452,22 +479,37 @@ func main() {
 			w.WriteHeader(403)
 			return
 		}
+	
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student, err = getUserFromEmail(query.Get("user"))
+			if err != nil {
+				student = user
+			}
+		}
+
 		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil || index < 0 {
+		if err != nil {
 			w.WriteHeader(400)
 			return
 		}
 
-		// Makes sure entry is editable
-		if !DBGet(user.Email, index).Editable() {
+		// Make sure existing entry is editable
+		if !DBGet(student.Email, index).Editable() {
 			w.WriteHeader(403)
 			return
 		}
 
-		DBRemove(user.Email, index)
-	
-		w.Header().Set("Location", "/list")
-		w.WriteHeader(303)
+		// Make changes
+		DBRemove(student.Email, index)
+
+		// Redirect
+		if !user.Admin {
+			w.Header().Set("Location", "/list")
+		} else {
+			w.Header().Set("Location", "/list?user=" + student.Email)
+		}
+		w.WriteHeader(302)
 	})
 
 	port := uint64(0)

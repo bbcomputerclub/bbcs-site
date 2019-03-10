@@ -19,20 +19,43 @@ func processAction (entry *DBEntry, query url.Values) string {
 	}
 }
 
-func processBlock (in []byte, action string) []byte {
+func processBlock (in []byte, action string, isAdmin bool) []byte {
 	fields := strings.Fields(string(in))
 	if len(fields) < 3 {
 		return nil
 	}
-	not := fields[0] == "ifnot"
-	if not != (fields[1] == action) {
-		return []byte(strings.Join(fields[2:], " "))
+	if fields[0] == "if" || fields[0] == "ifnot" {
+		not := fields[0] == "ifnot"
+		if fields[1] == "Admin" {
+			if not != isAdmin {
+				return []byte(strings.Join(fields[2:], " "))
+			}
+		} else if not != (fields[1] == action) {
+			return []byte(strings.Join(fields[2:], " "))
+		}
+	}
+	if fields[0] == "repeat" {
+		doc := DBDocumentGet()
+		out := ""
+		html := strings.Join(fields[2:], " ")		
+		if fields[1] == "student" {
+			for email, entries := range doc {
+				total := uint(0)
+				for _, entry := range entries {
+					if entry != nil {
+						total += entry.Hours				
+					}
+				}
+				out += strings.NewReplacer("[name]", email, "[email]", email, "[hours]", strconv.FormatUint(uint64(total), 10)).Replace(html)
+			}
+		}
+		return []byte(out)
 	}
 	return nil
 }
 
 /* Perform <!--[ ... ]--> substitutions */
-func processBlocks (indata []byte, action string) []byte {
+func processBlocks (indata []byte, action string, isAdmin bool) []byte {
 	out := string(indata)
 	start, end := -1, -1
 	count := 0
@@ -50,7 +73,7 @@ func processBlocks (indata []byte, action string) []byte {
 			count--
 			if count == 0 {
 				end = index
-				parsed := processBlock([]byte(out[start+5:end]), action)
+				parsed := processBlock([]byte(out[start+5:end]), action, isAdmin)
 				out = string(out[0:start]) + string(parsed) + string(out[end+4:])
 				index -= (end+4 - start) - len(parsed)
 				start, end = -1, -1
@@ -60,13 +83,13 @@ func processBlocks (indata []byte, action string) []byte {
 
 	// [5 [7 2] [5 3] 6]
 	if hasNested {
-		return processBlocks ([]byte(out), action)
+		return processBlocks ([]byte(out), action, isAdmin)
 	} else {
 		return []byte(out)
 	}
 }
 
-func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, error) {
+func process(in []byte, user UserData, student UserData, entry *DBEntry, entryIndex int) ([]byte, error) {
 	action := ""
 	if entryIndex < 0 || entry == nil {
 		action = ACTION_ADD
@@ -76,7 +99,7 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, 
 		action = ACTION_VIEW
 	}
 
-	in = processBlocks(in, action)
+	in = processBlocks(in, action, user.Admin)
 	
 	return regexp.MustCompile("(?s)\\[\\[.*?\\]\\]").ReplaceAllFunc(in, func (rawcode []byte) []byte {
 		code := string(rawcode[2:len(rawcode)-2])
@@ -92,6 +115,18 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, 
 				return nil
 			}
 			return []byte(time.Now().AddDate(0,0,diff).Format("2006-01-02"))
+		case "student":
+			if len(cmd) != 2 { return nil }
+			if cmd[1] == "name" {
+				return []byte(student.Name)
+			}
+			if cmd[1] == "email" {
+				return []byte(student.Email)
+			}
+			if cmd[1] == "total" {
+				return []byte(fmt.Sprint(DBTotal(student.Email)))
+			}
+			return nil
 		case "user":
 			if len(cmd) != 2 { return nil }
 			if cmd[1] == "name" {
@@ -99,9 +134,6 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, 
 			}
 			if cmd[1] == "email" {
 				return []byte(user.Email)
-			}
-			if cmd[1] == "total" {
-				return []byte(fmt.Sprint(DBTotal(user.Email)))
 			}
 			return nil
 		case "entry":
@@ -153,9 +185,9 @@ func process(in []byte, user UserData, entry *DBEntry, entryIndex int) ([]byte, 
 		case "repeat": // TODO: Change to block
 			html := strings.Trim(code[6:], " \t\n")
 			out := ""
-			for i, entry := range DBList(user.Email) {
+			for i, entry := range DBList(student.Email) {
 				if entry != nil {
-					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name,  "[hours]", strconv.FormatUint(uint64(entry.Hours), 10)).Replace(html)
+					out += strings.NewReplacer("[index]", fmt.Sprint(i), "[name]", entry.Name,  "[hours]", strconv.FormatUint(uint64(entry.Hours), 10), "[email]", student.Email).Replace(html)
 				}
 			}
 			return []byte(out)
