@@ -9,7 +9,6 @@ import (
 	"strings"
 	"strconv"
 	"time"
-	"encoding/json"
 	"errors"
 	"os"
 	"math/rand"
@@ -20,12 +19,6 @@ const (
 	ACTION_EDIT = "Edit"
 	ACTION_ADD = "Add"
 )
-
-type UserData struct {
-	Name string
-	Email string
-	Admin bool
-}
 
 /* Creates an entry from url parameters */
 func entryFromQuery(query url.Values) *DBEntry {
@@ -67,13 +60,12 @@ func entryToQuery(entry *DBEntry) url.Values {
 }
 
 func processAndServe(w http.ResponseWriter, r *http.Request, file string) {
-	sidC, err := r.Cookie("BBCS_SESSION_ID")
+	query := r.URL.Query()
+	user, err := authorize(r)
 	if err != nil {
-		w.Header().Set("Location", "/#error:Not%20signed%20in")		
-		w.WriteHeader(303)
-		return
+		w.WriteHeader(400)
 	}
-	sid := sidC.Value
+	student := user.IfAdmin(query.Get("user"))
 
 	body, err := ioutil.ReadFile(file)
 	if err != nil {
@@ -81,26 +73,10 @@ func processAndServe(w http.ResponseWriter, r *http.Request, file string) {
 		return
 	}
 
-	query := r.URL.Query()
-	user, ok := signinMap[sid]
-	if !ok {
-		w.Header().Set("Location", "/?" + url.QueryEscape(r.URL.String()) + "#error:Not%20signed%20in")
-		w.WriteHeader(303)
-		return
-	}
-
 	adminOnly := strings.HasPrefix(string(body), "<!-- ADMIN ONLY -->")
 	if adminOnly && !user.Admin {
 		w.WriteHeader(403)
-		return		
-	}
-
-	student := user
-	if user.Admin && len(query["user"]) != 0 {
-		student, err = getUserFromEmail(query.Get("user"))
-		if err != nil {
-			student = user
-		}
+		return
 	}
 
 	var entry *DBEntry = nil
@@ -122,58 +98,6 @@ func processAndServe(w http.ResponseWriter, r *http.Request, file string) {
 	}
 }
 
-/* Passes token through Google servers to validate it */
-func getUser(token string) (UserData, error) {
-	// Next 8 lines: Retrieves data from Google servers
-	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)	
-	if err != nil {
-		return UserData{}, errors.New("Something went wrong. Try again.")
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return UserData{}, errors.New("Something went wrong. Try again.")
-	}
-
-	// The data is stored in JSON. Unmarshal the data
-	data := make(map[string]interface{})
-	json.Unmarshal(body, &data)
-
-	// If the error field is present, there is an error
-	if data["error"] != nil {
-		return UserData{}, errors.New("Not signed in: " + fmt.Sprint(data["error"]))
-	}
-
-	// Make sure the domain is Blind Brook (the account is from Blind Brook)
-	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
-		return UserData{}, errors.New("That account isn't associated with Blind Brook.")
-	}
-
-	// Create UserData struct; fmt.Sprint converts things to strings (just in case it's not a string)
-	out := UserData{Admin:false}
-	out.Email = fmt.Sprint(data["email"])
-	if out.Email != "bstarr@blindbrook.org" {
-		out.Name = fmt.Sprint(data["name"])
-	} else {
-		out.Name = "Robert Starr"
-	}
-
-	if adminsData, err := ioutil.ReadFile("admins.txt"); err == nil {
-		for _, line := range strings.Split(string(adminsData), "\n") {
-			if out.Email == line {
-				out.Admin = true
-			}			
-		}
-	} else {
-		fmt.Fprintf(os.Stderr, "Error reading admins.txt: %s\n", err.Error())
-	}
-
-	return out, nil
-}
-
-func getUserFromEmail (email string) (UserData, error) {
-	return UserData{Email:email, Name:email, Admin:false}, nil
-}
-
 /* Maps session IDs to tokens */
 var signinMap = make(map[string]UserData)
 /* Generates a session ID */
@@ -183,6 +107,21 @@ func signinGen() string {
 		return signinGen() // try again
 	}
 	return out
+}
+
+/* Returns the user from a request */
+func authorize(r *http.Request) (UserData, error) {
+	sid, err := r.Cookie("BBCS_SESSION_ID")
+	if err != nil {
+		return UserData{}, err
+	}
+
+	user, ok := signinMap[sid.Value]
+	if !ok {
+		return UserData{}, errors.New("Session id invalid")
+	}
+
+	return user, nil
 }
 
 func main() {
@@ -285,7 +224,7 @@ func main() {
 	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
 		sid := signinGen()
 
-		user, err := getUser(r.URL.Query().Get("token"))
+		user, err := UserFromToken(r.URL.Query().Get("token"))
 		if err != nil {
 			w.Header().Set("Refresh", "0; url=/#error:" + url.QueryEscape(err.Error()))
 			w.WriteHeader(403)
@@ -345,37 +284,21 @@ func main() {
 	})
 
 	http.HandleFunc("/duplicate", func (w http.ResponseWriter, r *http.Request) {
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
-		if err != nil {
-			w.Header().Set("Refresh", "0;url=/#error:Not%20signed%20in")		
-			w.WriteHeader(403)
-			return
-		}
-		sid := sidC.Value
-
 		query := r.URL.Query()
-
-		user, ok := signinMap[sid]
-		if !ok {
-			w.Header().Set("Refresh", "0;url=/#error:Not%20signed%20in")
-			w.WriteHeader(403)
-			return
+		user, err := authorize(r)
+		if err != nil {
+			w.WriteHeader(400)
 		}
+		student := user.IfAdmin(query.Get("user"))
 
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student, err = getUserFromEmail(query.Get("user"))
-			if err != nil {
-				student = user
-			}
-		}
-
-		entryIndex, err := strconv.Atoi(r.URL.Query().Get("entry"))
+		// Get entry
+		index, err := strconv.Atoi(query.Get("entry"))
 		if err != nil {
 			w.WriteHeader(400)
 			return
 		}
-		entry := DBGet(student.Email, entryIndex)
+		
+		entry := DBGet(student.Email, index)
 		if entry == nil {
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(400)
@@ -385,9 +308,7 @@ func main() {
 
 		newQuery := entryToQuery(entry)
 		newQuery.Set("entry", "-1")
-		if user.Admin {
-			newQuery.Set("user", student.Email)
-		}
+		newQuery.Set("user", student.Email)
 		w.Header().Set("Location", "/edit?" + newQuery.Encode())
 		w.WriteHeader(303)
 	});
@@ -399,60 +320,37 @@ func main() {
 			w.WriteHeader(405)
 			return			
 		}
-	
+		
 		r.ParseForm()
 		query := r.PostForm
 
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
+		user, err := authorize(r)
 		if err != nil {
 			w.WriteHeader(403)
 			return
 		}
-		sid := sidC.Value
-		
-		user, ok := signinMap[sid]
-		if !ok {
-			w.WriteHeader(403)
-			return
-		}
+		student := user.IfAdmin(query.Get("user"))
 
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student, err = getUserFromEmail(query.Get("user"))
-			if err != nil {
-				student = user
-			}
-		}
-
+		// Get entry
 		index, err := strconv.Atoi(query.Get("entry"))
 		if err != nil {
 			w.WriteHeader(400)
 			return
 		}
 
-		// Make sure existing entry (if there is one) is editable
-		if index >= 0 {
-			if !DBGet(student.Email, index).Editable() {
-				w.WriteHeader(403)
-				return
-			}
-		}
-
 		newEntry := entryFromQuery(query)
-		if !newEntry.Editable() { // Make sure new entry is editable (not past 30 days)
+
+		// Make sure entry is editable
+		if !user.CanEdit(DBGet(student.Email, index)) || !user.CanEdit(newEntry) {
 			w.WriteHeader(403)
-			return		
+			return
 		}
 
 		// Make changes
 		DBSet(student.Email, newEntry, index)
 
 		// Redirect
-		if !user.Admin {
-			w.Header().Set("Location", "/list")
-		} else {
-			w.Header().Set("Location", "/list?user=" + student.Email)
-		}
+		w.Header().Set("Location", "/list?user=" + student.Email)
 		w.WriteHeader(302)
 	})
 
@@ -466,28 +364,15 @@ func main() {
 
 		r.ParseForm()
 		query := r.PostForm
-	
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
+
+		user, err := authorize(r)
 		if err != nil {
 			w.WriteHeader(403)
 			return
 		}
-		sid := sidC.Value
+		student := user.IfAdmin(query.Get("user"))
 
-		user, ok := signinMap[sid]
-		if !ok {
-			w.WriteHeader(403)
-			return
-		}
-	
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student, err = getUserFromEmail(query.Get("user"))
-			if err != nil {
-				student = user
-			}
-		}
-
+		// Get entry
 		index, err := strconv.Atoi(query.Get("entry"))
 		if err != nil {
 			w.WriteHeader(400)
@@ -495,7 +380,7 @@ func main() {
 		}
 
 		// Make sure existing entry is editable
-		if !DBGet(student.Email, index).Editable() {
+		if !user.CanEdit(DBGet(student.Email, index)) {
 			w.WriteHeader(403)
 			return
 		}
@@ -504,11 +389,7 @@ func main() {
 		DBRemove(student.Email, index)
 
 		// Redirect
-		if !user.Admin {
-			w.Header().Set("Location", "/list")
-		} else {
-			w.Header().Set("Location", "/list?user=" + student.Email)
-		}
+		w.Header().Set("Location", "/list")
 		w.WriteHeader(302)
 	})
 
