@@ -12,18 +12,19 @@ import (
 	"os"
 	"html/template"
 	"math/rand"
+	"errors"
 )
 
 // Returns user and student
 func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, error) {	
 	sidc, err := r.Cookie("BBCS_SESSION_ID")
 	if err != nil {
-		return UserData{}, UserData{}, err
+		return UserData{}, UserData{}, errors.New("Not signed in: " + err.Error())
 	}
 
 	user, err := SignedUser(sidc.Value)
 	if err != nil {
-		return UserData{}, UserData{}, err
+		return UserData{}, UserData{}, errors.New("Can't sign in: " + err.Error())
 	}
 	
 	if user.Admin && len(query.Get("user")) != 0{
