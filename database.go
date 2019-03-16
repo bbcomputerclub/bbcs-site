@@ -11,6 +11,9 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"net/url"
+	"strconv"
 )
 
 const DBPath = "./data.json"
@@ -157,4 +160,42 @@ func DBTotal(email string) uint {
 /* Removes an entry */
 func DBRemove(email string, index int) {
 	DBSet(email, nil, index)
+}
+
+func (entry *DBEntry) EncodeQuery() url.Values {
+	out := url.Values{}
+	out.Set("name", entry.Name)
+	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
+	out.Set("date", entry.Date.Format("2006-01-02"))
+	out.Set("org", entry.Organization)
+	out.Set("contactname", entry.ContactName)
+	out.Set("contactemail", entry.ContactEmail)
+	out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
+	return out
+}
+
+func DBEntryFromQuery(query url.Values) *DBEntry {
+	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
+	if err != nil {
+		hours = 1
+	}
+	date, err := time.Parse("2006-01-02", query.Get("date"))
+	if err != nil {
+		date = time.Now()
+	}
+
+	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+	if err != nil {
+		contactPhone = 0
+	}
+
+	return &DBEntry{
+		Name: query.Get("name"),
+		Hours: uint(hours),
+		Date: date,
+		Organization: query.Get("org"),
+		ContactName: query.Get("contactname"),
+		ContactEmail: query.Get("contactemail"),
+		ContactPhone: uint(contactPhone),
+	}
 }

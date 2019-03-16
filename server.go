@@ -14,43 +14,23 @@ import (
 	"math/rand"
 )
 
-/* Creates an entry from url parameters */
-func entryFromQuery(query url.Values) *DBEntry {
-	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
+// Returns user and student
+func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, error) {	
+	sidc, err := r.Cookie("BBCS_SESSION_ID")
 	if err != nil {
-		hours = 1
-	}
-	date, err := time.Parse("2006-01-02", query.Get("date"))
-	if err != nil {
-		date = time.Now()
+		return UserData{}, UserData{}, err
 	}
 
-	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+	user, err := SignedUser(sidc.Value)
 	if err != nil {
-		contactPhone = 0
+		return UserData{}, UserData{}, err
 	}
-
-	return &DBEntry{
-		Name: query.Get("name"),
-		Hours: uint(hours),
-		Date: date,
-		Organization: query.Get("org"),
-		ContactName: query.Get("contactname"),
-		ContactEmail: query.Get("contactemail"),
-		ContactPhone: uint(contactPhone),
+	
+	if user.Admin && len(query.Get("user")) != 0{
+		return user, UserFromEmail(query.Get("user")), nil
+	} else {
+		return user, user, nil 
 	}
-}
-
-func entryToQuery(entry *DBEntry) url.Values {
-	out := url.Values{}
-	out.Set("name", entry.Name)
-	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
-	out.Set("date", entry.Date.Format("2006-01-02"))
-	out.Set("org", entry.Organization)
-	out.Set("contactname", entry.ContactName)
-	out.Set("contactemail", entry.ContactEmail)
-	out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
-	return out
 }
 
 type FileHandler string
@@ -113,21 +93,14 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out := new(FileHandlerData)
 
-	user, err := SignedUserHTTP(r)
+	query := r.URL.Query()
+	var err error
+	out.User, out.Student, err = UsersFromRequest(r, query)
 	if err != nil {
 		return nil, err
-	}	
-
-	query := r.URL.Query()
-
-	out.User = user
-	if user.Admin && len(query["user"]) != 0 {
-		out.Student = UserFromEmail(query.Get("user"))
-	} else {
-		out.Student = user
 	}
 
-	if user.Admin {
+	if out.User.Admin {
 		doc := DBDocumentGet()
 		for email, _ := range doc {
 			out.Students = append(out.Students, UserFromEmail(email))
@@ -139,7 +112,7 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		if out.EntryIndex >= 0 {
 			out.Entry = DBGet(out.Student.Email, out.EntryIndex)
 		} else {
-			out.Entry = entryFromQuery(query)
+			out.Entry = DBEntryFromQuery(query)
 		}
 	} else {
 		out.EntryIndex = -1
@@ -293,13 +266,10 @@ func main() {
 
 	http.HandleFunc("/duplicate", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		user, err := SignedUserHTTP(r)
+		_, student, err := UsersFromRequest(r, query)
 		if err != nil {
-			w.WriteHeader(400)
-		}
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student = UserFromEmail(query.Get("user"))
+			w.WriteHeader(403)
+			return
 		}
 
 		// Get entry
@@ -308,7 +278,7 @@ func main() {
 			w.WriteHeader(400)
 			return
 		}
-		
+
 		entry := DBGet(student.Email, index)
 		if entry == nil {
 			w.Header().Set("Content-Type", "text/plain")
@@ -317,7 +287,7 @@ func main() {
 			return
 		}
 
-		newQuery := entryToQuery(entry)
+		newQuery := entry.EncodeQuery()
 		newQuery.Set("entry", "-1")
 		newQuery.Set("user", student.Email)
 		w.Header().Set("Location", "/edit?" + newQuery.Encode())
@@ -335,15 +305,10 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 
-		user, err := SignedUserHTTP(r)
+		user, student, err := UsersFromRequest(r, query)
 		if err != nil {
 			w.WriteHeader(403)
 			return
-		}
-
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student = UserFromEmail(query.Get("user"))
 		}
 
 		// Get entry
@@ -353,7 +318,7 @@ func main() {
 			return
 		}
 
-		newEntry := entryFromQuery(query)
+		newEntry := DBEntryFromQuery(query)
 
 		// Make sure entry is editable
 		if !user.CanEdit(DBGet(student.Email, index)) || !user.CanEdit(newEntry) {
@@ -380,14 +345,10 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 
-		user, err := SignedUserHTTP(r)
+		user, student, err := UsersFromRequest(r, query)
 		if err != nil {
 			w.WriteHeader(403)
 			return
-		}
-		student := user
-		if user.Admin && len(query["user"]) != 0 {
-			student = UserFromEmail(query.Get("user"))
 		}
 
 		// Get entry

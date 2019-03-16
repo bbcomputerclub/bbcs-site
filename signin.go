@@ -3,7 +3,6 @@ package main
 import (
 	"strconv"
 	"errors"
-	"net/http"
 	"math/rand"
 )
 
@@ -34,18 +33,9 @@ func Signout(sid string) {
 // Returns user associated with sid
 func SignedUser(sid string) (UserData, error) {
 	user, ok := SigninMap[sid]
-	if ok {
+	if ok && len(user.Email) != 0 {
 		return user, nil
 	} else {
 		return UserData{}, errors.New("Invalid session ID")
 	}
-}
-
-// Returns the SID of a request
-func SignedUserHTTP(r *http.Request) (UserData, error) {
-	sidc, err := r.Cookie("BBCS_SESSION_ID")
-	if err != nil {
-		return UserData{}, err
-	}
-	return SignedUser(sidc.Value)
 }
