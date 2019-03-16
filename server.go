@@ -9,10 +9,9 @@ import (
 	"strings"
 	"strconv"
 	"time"
-	"errors"
 	"os"
-	"math/rand"
 	"html/template"
+	"math/rand"
 )
 
 /* Creates an entry from url parameters */
@@ -74,7 +73,7 @@ const (
 func (d FileHandlerData) Action() string {
 	switch {
 	case d.EntryIndex < 0:
-		return ACTION_ADD	
+		return ACTION_ADD
 	case !d.Entry.Editable() && !d.User.Admin:
 		return ACTION_VIEW
 	default:
@@ -114,15 +113,10 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out := new(FileHandlerData)
 
-	sid, err := r.Cookie("BBCS_SESSION_ID")
+	user, err := SignedUserHTTP(r)
 	if err != nil {
 		return nil, err
-	}
-
-	user, ok := signinMap[sid.Value]
-	if !ok {
-		return nil, errors.New("Session ID invalid")
-	}
+	}	
 
 	query := r.URL.Query()
 
@@ -152,32 +146,6 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	}
 
 	return out, nil
-}
-
-/* Maps session IDs to tokens */
-var signinMap = make(map[string]UserData)
-/* Generates a session ID */
-func signinGen() string {
-	out := strconv.FormatInt(rand.Int63(), 36)
-	if _, ok := signinMap[out]; ok { // if seesion id already is a thing
-		return signinGen() // try again
-	}
-	return out
-}
-
-/* Returns the user from a request */
-func authorize(r *http.Request) (UserData, error) {
-	sid, err := r.Cookie("BBCS_SESSION_ID")
-	if err != nil {
-		return UserData{}, err
-	}
-
-	user, ok := signinMap[sid.Value]
-	if !ok {
-		return UserData{}, errors.New("Session id invalid")
-	}
-
-	return user, nil
 }
 
 func main() {
@@ -259,11 +227,7 @@ func main() {
 		http.ServeFile(w, r, "generator.html")
 	})
 
-	http.HandleFunc("/source", func (w http.ResponseWriter, r *http.Request) {
-		// Redirect to the GitHub repo; 301 is a permanant redirect
-		w.Header().Set("Location", "https://github.com/bbcomputerclub/bbcs-site/")
-		w.WriteHeader(301)
-	})
+	http.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
 
 	http.HandleFunc("/calendar", func (w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "calendar.html")
@@ -278,8 +242,6 @@ func main() {
 	 *    redirect: An escaped URI
 	 */
 	http.HandleFunc("/signin", func (w http.ResponseWriter, r *http.Request) {
-		sid := signinGen()
-
 		user, err := UserFromToken(r.URL.Query().Get("token"))
 		if err != nil {
 			w.Header().Set("Refresh", "0; url=/#error:" + url.QueryEscape(err.Error()))
@@ -287,7 +249,7 @@ func main() {
 			return
 		}
 
-		signinMap[sid] = user
+		sid := Signin(user)
 		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID", Value:sid, HttpOnly:true})
 
 		redirect := r.URL.Query().Get("redirect")
@@ -311,8 +273,7 @@ func main() {
 			return			
 		}
 		sid := sidC.Value
-	
-		delete(signinMap, sid)
+		Signout(sid)	
 
 		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID",Value:"",MaxAge:-1})
 		w.Header().Set("Location", "/#signout")
@@ -332,7 +293,7 @@ func main() {
 
 	http.HandleFunc("/duplicate", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		user, err := authorize(r)
+		user, err := SignedUserHTTP(r)
 		if err != nil {
 			w.WriteHeader(400)
 		}
@@ -374,11 +335,12 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 
-		user, err := authorize(r)
+		user, err := SignedUserHTTP(r)
 		if err != nil {
 			w.WriteHeader(403)
 			return
 		}
+
 		student := user
 		if user.Admin && len(query["user"]) != 0 {
 			student = UserFromEmail(query.Get("user"))
@@ -418,7 +380,7 @@ func main() {
 		r.ParseForm()
 		query := r.PostForm
 
-		user, err := authorize(r)
+		user, err := SignedUserHTTP(r)
 		if err != nil {
 			w.WriteHeader(403)
 			return
