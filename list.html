@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>[[user name]]'s hours</title>
+		<title>{{.Student.Name}}'s hours</title>
 		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
 		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
 		<link rel="apple-touch-icon" href="/icons/192.png">
@@ -20,27 +20,23 @@
 	</head>
 	<body>
 		<div class="title">
-			<h1 style="flex-grow:1">[[student name]]'s <span class="hide-small">community service</span> hours</h1>
-			<span>[[user email]]</span>
+			<h1 style="flex-grow:1">{{.Student.Name}}'s <span class="hide-small">community service</span> hours</h1>
+			<span>{{.User.Email}}</span>
 			<a href="/signout" class="button light">Sign out</a>		
 		</div>
 		<div class="title-spacer"></div>
-		<main style="background:#aaa;color:#fff"><b>Total</b> <b style="float:right">[[student total]]</b></main>
-		<ul class="list linked">[[repeat
-			<li>
-			<!--[ifnot Admin
-				<a href="/edit?entry=[index]">[name]
-			]-->
-			<!--[if Admin
-				<a href="/edit?entry=[index]&user=[email]">[name]
-			]-->						
-			<span style="float:right">[hours]</span></a></li>
-		]]</ul>
-		<!--[ifnot Admin
-			<a href="/add" class="button strong corner">
-		]-->
-		<!--[if Admin
-			<a href="/add?user=[[student email]]" class="button strong corner">
-		]-->Add</a>		
+		<main style="background:#aaa;color:#fff"><b>Total</b> <b style="float:right">{{.Student.Total}}</b></main>
+		<ul class="list linked">
+		{{$global := .}}
+		{{range $index, $entry := .StudentEntries}}
+			{{if $entry}}
+				<li><a href="/edit?entry={{$index}}&user={{$global.Student.Email}}">
+				{{$entry.Name}}
+				<span style="float:right">{{$entry.Hours}}</span>
+				</a></li>
+			{{end}}
+		{{end}}			
+		</ul>
+		<a href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
    </body>
 </html>

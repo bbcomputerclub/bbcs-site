@@ -16,6 +16,10 @@ type UserData struct {
 	Admin bool
 }
 
+func (u UserData) Total() uint {
+	return DBTotal(u.Email)
+}
+
 func (u UserData) CanEdit(entry *DBEntry) bool {
 	return u.Admin || entry.Editable()
 }
@@ -71,13 +75,4 @@ func UserFromToken(token string) (UserData, error) {
 
 func UserFromEmail (email string) UserData {
 	return UserData{Email:email, Name:email, Admin:false}
-}
-
-/* Returns a new user created from email if u.Admin, otherwise returns u */
-func (u UserData) IfAdmin(email string) UserData {
-	if u.Admin && len(email) != 0 && email != u.Email {
-		return UserFromEmail(email)
-	} else {
-		return u
-	}
 }

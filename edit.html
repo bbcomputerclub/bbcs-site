@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>[[entry action]] [[entry name]]</title>
+		<title>{{.Action}} {{.Entry.Name}}</title>
 		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
 		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">		 
 		<link rel="apple-touch-icon" href="/icons/192.png">
@@ -19,46 +19,45 @@
 		<link rel="manifest" href="/manifest.json">
 	</head>
 	<body>
-		<!--[ifnot View
+		{{if ne .Action "View"}}
 		<form action="/update" method="POST">
-		]-->
+		{{end}}
 			<div class="title">
-				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="[[entry name]]" required [[entry disabled]]></h1>
-				<span>[[user email]]</span>	
+				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}></h1>
+				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>		
 			</div>
 			<div class="title-spacer"></div>		
 			<main>
 				<div class="flex flex-sm">
-					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="[[entry hours]]" [[entry disabled]] />
-					<input name="date" class="textfield" type="date" min="[[date -30]]" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="[[entry date]]" placeholder="Date (e.g. 2018-10-31)" [[entry disabled]] />
+					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="{{.Entry.Hours}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="date" class="textfield" type="date" {{if not .User.Admin}}min="{{(time -30).Format "2006-01-02"}}"{{end}} placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="{{.Entry.Date.Format "2006-01-02"}}" placeholder="Date (e.g. 2018-10-31)" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
-				<input name="entry" type="hidden" value="[[entry index]]">
-				<input name="user" type="hidden" value="[[student email]]">
-				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="[[entry org]]" required [[entry disabled]] />
+				<input name="entry" type="hidden" value="{{.EntryIndex}}">
+				<input name="user" type="hidden" value="{{.Student.Email}}">
+				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
 				
 				<div class="flex">
-					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="[[entry contact.name]]" [[entry disabled]] />
-					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="[[entry contact.email]]" [[entry disabled]] />
-					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="[[entry contact.phone]]" pattern="[0-9\-\+ ]+" [[entry disabled]] />
+					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="+{{.Entry.ContactPhone}}" pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
-				<!--[ifnot View
+				{{if ne .Action "View"}}
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
 					<span style="float:right;margin-top:8px">
-						<!--[if Edit
+						{{if eq .Action "Edit"}}
 							<button formaction="/delete" class="button" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
-							<a class="button" href="/duplicate?entry=[[entry index]]&user=[[student email]]" style="margin-left:8px">Duplicate</a>
-						]-->
-						<a class="button" style="margin-left:8px" href="/list?user=[[student email]]">Cancel</a> 
+							<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-left:8px">Duplicate</a>
+						{{end}}
+						<a class="button" style="margin-left:8px" href="/list?user={{.Student.Email}}">Cancel</a> 
 					</span>
-				]-->
-				<!--[if View
+				{{else}}
 					<a class="button strong" href="/list?user=[[student email]]" style="margin-top:8px">Back</a>
-					<a class="button" href="/duplicate?entry=[[entry index]]&user=[[student email]]" style="margin-top:8px;float:right">Duplicate</a>
-				]-->
+					<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-top:8px;float:right">Duplicate</a>
+				{{end}}
 			</main>
-			<!--[ifnot View
+			{{if ne .Action "View"}}
 			</form>
-			]-->
+			{{end}}
 	</body>
 </html>

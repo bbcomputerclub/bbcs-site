@@ -12,12 +12,7 @@ import (
 	"errors"
 	"os"
 	"math/rand"
-)
-
-const (
-	ACTION_VIEW = "View"
-	ACTION_EDIT = "Edit"
-	ACTION_ADD = "Add"
+	"html/template"
 )
 
 /* Creates an entry from url parameters */
@@ -59,43 +54,104 @@ func entryToQuery(entry *DBEntry) url.Values {
 	return out
 }
 
-func processAndServe(w http.ResponseWriter, r *http.Request, file string) {
-	query := r.URL.Query()
-	user, err := authorize(r)
-	if err != nil {
-		w.WriteHeader(400)
-	}
-	student := user.IfAdmin(query.Get("user"))
+type FileHandler string
+type FileHandlerData struct {
+	Entry *DBEntry	// Current entry, or nil
+	EntryIndex int	// Index of entry
+	
+	User UserData	// Current logged-in user
+	Student UserData // Which student he is looking at
 
-	body, err := ioutil.ReadFile(file)
+	Students []UserData
+}
+
+const (
+	ACTION_VIEW = "View"
+	ACTION_EDIT = "Edit"
+	ACTION_ADD = "Add"
+)
+
+func (d FileHandlerData) Action() string {
+	switch {
+	case d.EntryIndex < 0:
+		return ACTION_ADD	
+	case !d.Entry.Editable() && !d.User.Admin:
+		return ACTION_VIEW
+	default:
+		return ACTION_EDIT
+	}
+}
+
+func (d FileHandlerData) StudentEntries() []*DBEntry {
+	return DBList(d.Student.Email)
+}
+
+func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	data, err := dataFromRequest(r)
+	if err != nil {
+		w.Header().Set("Refresh", "0;url=/#error:" + url.QueryEscape(err.Error()))
+		w.WriteHeader(400)
+		return
+	}
+
+	t, err := template.New(string(f)).Funcs(template.FuncMap{
+		"time": func (from int) time.Time {
+			return time.Now().AddDate(0,0,from)
+		},
+	}).ParseFiles(string(f))
 	if err != nil {
 		w.WriteHeader(500)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
+	err = t.Execute(w, data)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return		
+	}
+}
 
-	adminOnly := strings.HasPrefix(string(body), "<!-- ADMIN ONLY -->")
-	if adminOnly && !user.Admin {
-		w.WriteHeader(403)
-		return
+func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
+	out := new(FileHandlerData)
+
+	sid, err := r.Cookie("BBCS_SESSION_ID")
+	if err != nil {
+		return nil, err
 	}
 
-	var entry *DBEntry = nil
-	var entryIndex int
-	if entryIndex, err = strconv.Atoi(query.Get("entry")); err == nil && entryIndex >= 0 {
-		entry = DBGet(student.Email, entryIndex)
-	} else {
-		entry = entryFromQuery(query)
-		entryIndex = -1
+	user, ok := signinMap[sid.Value]
+	if !ok {
+		return nil, errors.New("Session ID invalid")
 	}
-	
-	if res, err := process(body, user, student, entry, entryIndex);  err == nil {
-		w.Header().Set("Content-Type", "text/html")
-		w.Write(res)
+
+	query := r.URL.Query()
+
+	out.User = user
+	if user.Admin && len(query["user"]) != 0 {
+		out.Student = UserFromEmail(query.Get("user"))
 	} else {
-		// If there was an error, redirect to the login page
-		w.Header().Set("Location", "/?" + url.QueryEscape(r.URL.String()) + "#error:" + url.QueryEscape(err.Error()))
-		w.WriteHeader(303)
+		out.Student = user
 	}
+
+	if user.Admin {
+		doc := DBDocumentGet()
+		for email, _ := range doc {
+			out.Students = append(out.Students, UserFromEmail(email))
+		}
+	}
+
+	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
+	if err == nil {
+		if out.EntryIndex >= 0 {
+			out.Entry = DBGet(out.Student.Email, out.EntryIndex)
+		} else {
+			out.Entry = entryFromQuery(query)
+		}
+	} else {
+		out.EntryIndex = -1
+	}
+
+	return out, nil
 }
 
 /* Maps session IDs to tokens */
@@ -264,17 +320,9 @@ func main() {
 		w.WriteHeader(303)
 	})
 	
-	http.HandleFunc("/list", func (w http.ResponseWriter, r *http.Request) { 
-		processAndServe(w, r, "list.html")
-	})
-
-	http.HandleFunc("/admin", func (w http.ResponseWriter, r *http.Request) { 
-		processAndServe(w, r, "admin.html")
-	})
-
-	http.HandleFunc("/edit", func (w http.ResponseWriter, r *http.Request) {
-		processAndServe(w, r, "edit.html")		
-	})
+	http.Handle("/list", FileHandler("list.html"))
+	http.Handle("/admin", FileHandler("admin.html"))
+	http.Handle("/edit", FileHandler("edit.html"))
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
@@ -289,7 +337,10 @@ func main() {
 		if err != nil {
 			w.WriteHeader(400)
 		}
-		student := user.IfAdmin(query.Get("user"))
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student = UserFromEmail(query.Get("user"))
+		}
 
 		// Get entry
 		index, err := strconv.Atoi(query.Get("entry"))
@@ -329,7 +380,10 @@ func main() {
 			w.WriteHeader(403)
 			return
 		}
-		student := user.IfAdmin(query.Get("user"))
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student = UserFromEmail(query.Get("user"))
+		}
 
 		// Get entry
 		index, err := strconv.Atoi(query.Get("entry"))
@@ -370,7 +424,10 @@ func main() {
 			w.WriteHeader(403)
 			return
 		}
-		student := user.IfAdmin(query.Get("user"))
+		student := user
+		if user.Admin && len(query["user"]) != 0 {
+			student = UserFromEmail(query.Get("user"))
+		}
 
 		// Get entry
 		index, err := strconv.Atoi(query.Get("entry"))
