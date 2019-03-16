@@ -288,17 +288,16 @@ func main() {
 		}
 
 		signinMap[sid] = user
-
-		redirect := r.URL.Query().Get("redirect")
-		if redirect == "" {
-			redirect = "/list"
-		}
-
 		http.SetCookie(w, &http.Cookie{Name:"BBCS_SESSION_ID", Value:sid, HttpOnly:true})
 
+		redirect := r.URL.Query().Get("redirect")
 		redirectEsc, err := url.QueryUnescape(redirect)
-		if err != nil {
-			w.Header().Set("Location", "/list")
+		if len(redirect) == 0 || err != nil {
+			if user.Admin {
+				w.Header().Set("Location", "/admin")
+			} else {
+				w.Header().Set("Location", "/list")			
+			}
 		} else {
 			w.Header().Set("Location", redirectEsc)
 		}
