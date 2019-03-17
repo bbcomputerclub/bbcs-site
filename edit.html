@@ -40,7 +40,7 @@
 				<div class="flex">
 					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
 					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" value="+{{.Entry.ContactPhone}}" pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)"{{if ne .Entry.ContactPhone 0}} value="+{{.Entry.ContactPhone}}"{{end}} pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
 				{{if ne .Action "View"}}
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>

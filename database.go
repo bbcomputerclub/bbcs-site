@@ -64,8 +64,12 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 		"hours": entry.Hours,
 		"date": entry.Date.Format("2006-01-02"),
 		"org": entry.Organization,
-		"contact_name": entry.ContactName,
-		"contact_email": entry.ContactEmail,
+	}
+	if entry.ContactName != "" {
+		out["contact_name"] = entry.ContactName
+	}
+	if entry.ContactEmail != "" {
+		out["contact_email"] = entry.ContactEmail
 	}
 	if entry.ContactPhone != 0 {
 		out["contact_phone"] = entry.ContactPhone	
@@ -168,9 +172,15 @@ func (entry *DBEntry) EncodeQuery() url.Values {
 	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
 	out.Set("date", entry.Date.Format("2006-01-02"))
 	out.Set("org", entry.Organization)
-	out.Set("contactname", entry.ContactName)
-	out.Set("contactemail", entry.ContactEmail)
-	out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
+	if entry.ContactName != "" {
+		out.Set("contactname", entry.ContactName)
+	}
+	if entry.ContactEmail != "" {
+		out.Set("contactemail", entry.ContactEmail)
+	}
+	if entry.ContactPhone != 0 {
+		out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
+	}
 	return out
 }
 
