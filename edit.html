@@ -52,7 +52,7 @@
 						<a class="button" style="margin-left:8px" href="/list?user={{.Student.Email}}">Cancel</a> 
 					</span>
 				{{else}}
-					<a class="button strong" href="/list?user=[[student email]]" style="margin-top:8px">Back</a>
+					<a class="button strong" href="/list?user={{.Student.Email}}" style="margin-top:8px">Back</a>
 					<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-top:8px;float:right">Duplicate</a>
 				{{end}}
 			</main>
