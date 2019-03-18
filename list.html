@@ -27,15 +27,15 @@
 		<div class="title-spacer"></div>
 		<main style="background:#aaa;color:#fff"><b>Total</b> <b style="float:right">{{.Student.Total}}</b></main>
 		<ul class="list linked">
-		{{$global := .}}
-		{{range $index, $entry := .StudentEntries}}
+		{{- $global := .}}
+		{{- range $index, $entry := .StudentEntries}}
 			{{if $entry}}
 				<li><a href="/edit?entry={{$index}}&user={{$global.Student.Email}}">
 				{{$entry.Name}}
 				<span style="float:right">{{$entry.Hours}}</span>
 				</a></li>
 			{{end}}
-		{{end}}			
+		{{end -}}
 		</ul>
 		<a href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
    </body>
