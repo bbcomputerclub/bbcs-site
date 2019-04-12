@@ -13,6 +13,7 @@ import (
 	"html/template"
 	"math/rand"
 	"errors"
+	"sort"
 )
 
 // Returns user and student
@@ -91,6 +92,19 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type FileHandlerStudentSort []UserData
+func (s FileHandlerStudentSort) Len() int {
+	return len(s)
+}
+func (s FileHandlerStudentSort) Less(i, j int) bool {
+	return s[i].Name < s[j].Name
+}
+func (s FileHandlerStudentSort) Swap(i, j int) {
+	tmp := s[i]
+	s[i] = s[j]
+	s[j] = tmp
+}
+
 func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out := new(FileHandlerData)
 
@@ -107,6 +121,8 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 			out.Students = append(out.Students, UserFromEmail(email))
 		}
 	}
+
+	sort.Sort(FileHandlerStudentSort(out.Students))
 
 	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
 	if err == nil {
