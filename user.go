@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"strings"
 	"os"
+	"io"
+	"encoding/csv"
+	"strconv"
 )
 
 type UserData struct {
 	Name string
+	Grade uint
 	Email string
 	Admin bool
 }
@@ -74,5 +78,54 @@ func UserFromToken(token string) (UserData, error) {
 }
 
 func UserFromEmail (email string) UserData {
-	return UserData{Email:email, Name:email, Admin:false}
+	data, ok := StudentList[email]
+	if ok {
+		return data
+	} else {
+		return UserData{Email:email, Name:email, Admin:false, Grade:0}
+	}
+}
+
+// students.csv code below
+// students.csv has the format Name, Grade / Graduation Year, Email
+
+var StudentList = make(map[string]UserData)
+
+func StudentListInit() error {
+	file, err := os.Open("students.csv")
+	if err != nil {
+		return err
+	}
+	reader := csv.NewReader(file)
+	reader.Read() // skip header
+	for {
+		record, err := reader.Read()
+		
+		if err == io.EOF {
+			break
+		}
+
+		if len(record) < 3 {
+			fmt.Fprintln(os.Stderr, "warning: not enough cells in row '" + strings.Join(record, ",") + "'")
+			continue
+		}
+
+		if err != nil && err != csv.ErrFieldCount {
+			return err
+		}
+
+		grade, err := strconv.ParseUint(record[1], 10, 64)
+		if err != nil {
+			return err	
+		}
+
+		StudentList[record[2]] = UserData{
+			Name: record[0],
+			Grade: uint(grade),
+			Email: record[2],
+			Admin: false,
+		}
+	}
+	
+	return nil
 }

@@ -389,6 +389,12 @@ func main() {
 	}
 
 	fmt.Printf("http://localhost:%v/\n", port)
+	if err = StudentListInit(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+		return
+	}
 	err = http.ListenAndServe(":" + fmt.Sprint(port), nil)
 	fmt.Fprintln(os.Stderr, err)
+	os.Exit(1)
 }

@@ -82,6 +82,7 @@ func (entry *DBEntry) Editable() bool {
 	return time.Since(entry.Date) <= duration * 24 * 30
 }
 
+// Represents a document that contains all entries
 type DBDocument map[string][]*DBEntry
 
 /* Returns data.json or an empty document if data.jsond doesn't exist */
