@@ -43,7 +43,7 @@ type FileHandlerData struct {
 	User UserData	// Current logged-in user
 	Student UserData // Which student he is looking at
 
-	Students []UserData
+	Students map[uint][]UserData
 }
 
 const (
@@ -116,13 +116,15 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	}
 
 	if out.User.Admin {
-		doc := DBDocumentGet()
-		for email, _ := range doc {
-			out.Students = append(out.Students, UserFromEmail(email))
+		out.Students = make(map[uint][]UserData)
+		for _, student := range StudentList {
+			out.Students[student.Grade] = append(out.Students[student.Grade], student)
 		}
 	}
 
-	sort.Sort(FileHandlerStudentSort(out.Students))
+	for _, slice := range out.Students {
+		sort.Sort(FileHandlerStudentSort(slice))
+	}
 
 	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
 	if err == nil {
