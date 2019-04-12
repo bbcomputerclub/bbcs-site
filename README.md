@@ -1,5 +1,5 @@
 # BB-Community-Service
-The new community service website. The old one can be found [here](http://www2.blindbrook.org/test/zkcs/login.html).
+The proposed community service website. The current one can be found [here](http://www2.blindbrook.org/test/zkcs/login.html).
 
 ## Building
 ```bash
