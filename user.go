@@ -54,13 +54,14 @@ func UserFromToken(token string) (UserData, error) {
 		return UserData{}, errors.New("That account isn't associated with Blind Brook.")
 	}
 
-	// Create UserData struct; fmt.Sprint converts things to strings (just in case it's not a string)
-	out := UserData{Admin:false}
-	out.Email = fmt.Sprint(data["email"])
-	if out.Email != "bstarr@blindbrook.org" {
+	
+	out, ok := StudentList[fmt.Sprint(data["email"])]
+	out.Admin = false
+
+	// Create UserData struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
+	if !ok {
+		out.Email = fmt.Sprint(data["email"])
 		out.Name = fmt.Sprint(data["name"])
-	} else {
-		out.Name = "Robert Starr"
 	}
 
 	// Is the email in admins.txt?
