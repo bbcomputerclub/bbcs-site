@@ -141,7 +141,7 @@ func main() {
 		 * PNG files are stored in the directory as icon-N.png
 		 * This section simply retrieves the file and serves it
 		 */
-			file, err := os.Open("icon-" + r.URL.Path[7:])
+			file, err := os.Open("icons/icon-" + r.URL.Path[7:])
 			if err != nil {
 				w.Header().Set("Content-Type", "text/plain")					
 				w.WriteHeader(404)
@@ -156,7 +156,7 @@ func main() {
 		 * This section retrieves icon.svg, replaces the width and height attributes, and then serves the modified file
 		 */
 			// Get icon.svg
-			bodybyte, err := ioutil.ReadFile("icon.svg")
+			bodybyte, err := ioutil.ReadFile("icons/icon.svg")
 			if err != nil {
 				w.Header().Set("Content-Type", "text/plain")			
 				w.WriteHeader(500)
