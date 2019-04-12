@@ -35,6 +35,15 @@ body {
 		margin-bottom: -2px;
 	}
 	.title-spacer {height:56px;}
+	.title .icon {
+		position:absolute;
+		left: 24px;
+		top: 16px;
+		margin: 0;
+
+		text-decoration: none;
+		border: 0 !important;
+	}
 
 .list {
 	padding: 0;
@@ -170,6 +179,10 @@ h1 {
 	.title {
 		padding: 16px 32px;
 	}
+	.title.with-icon {
+		padding: 16px 80px;
+		padding-right: 32px;
+	}
 	main {
 		padding: 16px 32px;
 	}
@@ -196,6 +209,13 @@ h1 {
 @media (max-width: 599px) {
 	.title {
 		padding: 16px;
+	}
+	.title.with-icon {
+		padding: 16px 48px;
+		padding-right: 16px;
+	}
+	.title .icon {
+		left: 16px;
 	}
 	main {
 		padding: 16px;
