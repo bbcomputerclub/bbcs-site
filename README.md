@@ -4,5 +4,6 @@ The new community service website. The old one can be found [here](http://www2.b
 ## Building
 ```bash
 git clone https://github.com/bbcomputerclub/bbcs-site.git
+cd bbcs-site
 go build *.go
 ```
