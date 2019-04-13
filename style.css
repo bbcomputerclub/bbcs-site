@@ -4,6 +4,10 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
+.horizontal-padding {
+	padding-left: 72px;
+	padding-right: 72px; }
+
 .title {
     padding: 16px 72px;
     background: #26428b;
@@ -44,6 +48,12 @@ body {
 		text-decoration: none;
 		border: 0 !important;
 	}
+
+@media print {
+	.title :not(h1) {
+		display: none;
+	}
+}
 
 .list {
 	padding: 0;
@@ -193,6 +203,11 @@ h1 {
 		padding: 8px 32px;
 	}
 
+	.horizontal-padding {
+		padding-left: 32px;
+		padding-right: 32px; }
+
+
 	.hide-med {
 		display: none;
 	}
@@ -239,4 +254,8 @@ h1 {
 	.flex-sm > :not(:first-child) {
 		margin-left: 0;
 	}
+
+	.horizontal-padding {
+		padding-left: 16px;
+		padding-right: 16px; }
 }

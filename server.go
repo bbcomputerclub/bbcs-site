@@ -44,6 +44,7 @@ type FileHandlerData struct {
 	Student UserData // Which student he is looking at
 
 	Students map[uint][]UserData
+	Grades []uint
 }
 
 const (
@@ -92,19 +93,6 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type FileHandlerStudentSort []UserData
-func (s FileHandlerStudentSort) Len() int {
-	return len(s)
-}
-func (s FileHandlerStudentSort) Less(i, j int) bool {
-	return s[i].Name < s[j].Name
-}
-func (s FileHandlerStudentSort) Swap(i, j int) {
-	tmp := s[i]
-	s[i] = s[j]
-	s[j] = tmp
-}
-
 func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out := new(FileHandlerData)
 
@@ -116,14 +104,26 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	}
 
 	if out.User.Admin {
+		grades := make(map[uint]bool)
 		out.Students = make(map[uint][]UserData)
 		for _, student := range StudentList {
 			out.Students[student.Grade] = append(out.Students[student.Grade], student)
+			grades[student.Grade] = true
 		}
+
+		for grade, _ := range grades {
+			out.Grades = append(out.Grades, grade)
+		}
+
+		sort.Slice(out.Grades, func (i, j int) bool {
+			return out.Grades[i] > out.Grades[j]
+		})
 	}
 
 	for _, slice := range out.Students {
-		sort.Sort(FileHandlerStudentSort(slice))
+		sort.Slice(slice, func (i, j int) bool {
+			return slice[i].Name < slice[j].Name		
+		})
 	}
 
 	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
