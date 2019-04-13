@@ -16,7 +16,9 @@ import (
 	"strconv"
 )
 
-const DBPath = "./data.json"
+func DBPath (grade uint) string {
+	return "./data-" + strconv.FormatUint(uint64(grade), 10) + ".json"
+}
 
 type DBEntry struct {
 	Name string
@@ -25,7 +27,7 @@ type DBEntry struct {
 	Organization string
 	ContactName string
 	ContactEmail string
-	ContactPhone uint	
+	ContactPhone uint
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -86,8 +88,8 @@ func (entry *DBEntry) Editable() bool {
 type DBDocument map[string][]*DBEntry
 
 /* Returns data.json or an empty document if data.jsond doesn't exist */
-func DBDocumentGet() DBDocument {
-	body, err := ioutil.ReadFile(DBPath)
+func DBDocumentGet(grade uint) DBDocument {
+	body, err := ioutil.ReadFile(DBPath(grade))
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)	
@@ -103,8 +105,8 @@ func DBDocumentGet() DBDocument {
 }
 
 /* Adds / changes an entry */
-func DBSet(email string, entry *DBEntry, index int) {
-	doc := DBDocumentGet()
+func DBSet(email string, grade uint, entry *DBEntry, index int) {
+	doc := DBDocumentGet(grade)
 	
 	if index < 0 {
 		doc[email] = append(doc[email], entry)
@@ -117,7 +119,7 @@ func DBSet(email string, entry *DBEntry, index int) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	err = ioutil.WriteFile(DBPath, newbody, 0644)
+	err = ioutil.WriteFile(DBPath(grade), newbody, 0644)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return
@@ -125,8 +127,8 @@ func DBSet(email string, entry *DBEntry, index int) {
 }
 
 /* Lists the entries */
-func DBList(email string) []*DBEntry {
-	doc := DBDocumentGet()
+func DBList(email string, grade uint) []*DBEntry {
+	doc := DBDocumentGet(grade)
 	return doc[email]
 }
 
@@ -139,8 +141,8 @@ func DBEntryDefault() *DBEntry {
 }
 
 /* Retrieves an entry. If not found, returns the default entry */
-func DBGet(email string, index int) *DBEntry {
-	doc := DBDocumentGet()
+func DBGet(email string, grade uint, index int) *DBEntry {
+	doc := DBDocumentGet(grade)
 
 	if len(doc[email]) > index && index >= 0 {
 		return doc[email][index]
@@ -150,8 +152,8 @@ func DBGet(email string, index int) *DBEntry {
 }
 
 /* Returns the total # of hours */
-func DBTotal(email string) uint {
-	list := DBList(email)
+func DBTotal(email string, grade uint) uint {
+	list := DBList(email, grade)
 
 	total := uint(0)
 	for _, entry := range list {
@@ -163,8 +165,8 @@ func DBTotal(email string) uint {
 }
 
 /* Removes an entry */
-func DBRemove(email string, index int) {
-	DBSet(email, nil, index)
+func DBRemove(email string, grade uint, index int) {
+	DBSet(email, grade, nil, index)
 }
 
 func (entry *DBEntry) EncodeQuery() url.Values {

@@ -21,7 +21,7 @@ type UserData struct {
 }
 
 func (u UserData) Total() uint {
-	return DBTotal(u.Email)
+	return DBTotal(u.Email, u.Grade)
 }
 
 func (u UserData) CanEdit(entry *DBEntry) bool {

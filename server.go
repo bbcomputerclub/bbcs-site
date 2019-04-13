@@ -65,7 +65,7 @@ func (d FileHandlerData) Action() string {
 }
 
 func (d FileHandlerData) StudentEntries() []*DBEntry {
-	return DBList(d.Student.Email)
+	return DBList(d.Student.Email, d.Student.Grade)
 }
 
 func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +129,7 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
 	if err == nil {
 		if out.EntryIndex >= 0 {
-			out.Entry = DBGet(out.Student.Email, out.EntryIndex)
+			out.Entry = DBGet(out.Student.Email, out.Student.Grade, out.EntryIndex)
 		} else {
 			out.Entry = DBEntryFromQuery(query)
 		}
@@ -298,7 +298,7 @@ func main() {
 			return
 		}
 
-		entry := DBGet(student.Email, index)
+		entry := DBGet(student.Email, student.Grade, index)
 		if entry == nil {
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(400)
@@ -340,13 +340,13 @@ func main() {
 		newEntry := DBEntryFromQuery(query)
 
 		// Make sure entry is editable
-		if !user.CanEdit(DBGet(student.Email, index)) || !user.CanEdit(newEntry) {
+		if !user.CanEdit(DBGet(student.Email, student.Grade, index)) || !user.CanEdit(newEntry) {
 			w.WriteHeader(403)
 			return
 		}
 
 		// Make changes
-		DBSet(student.Email, newEntry, index)
+		DBSet(student.Email, student.Grade, newEntry, index)
 
 		// Redirect
 		w.Header().Set("Location", "/list?user=" + student.Email)
@@ -378,13 +378,13 @@ func main() {
 		}
 
 		// Make sure existing entry is editable
-		if !user.CanEdit(DBGet(student.Email, index)) {
+		if !user.CanEdit(DBGet(student.Email, student.Grade, index)) {
 			w.WriteHeader(403)
 			return
 		}
 
 		// Make changes
-		DBRemove(student.Email, index)
+		DBRemove(student.Email, student.Grade, index)
 
 		// Redirect
 		w.Header().Set("Location", "/list")
