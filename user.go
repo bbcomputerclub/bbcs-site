@@ -13,6 +13,11 @@ import (
 	"strconv"
 )
 
+const (
+	StudentListPath = "./data/students.csv"
+	AdminListPath = "./data/admins.txt"
+)
+
 type UserData struct {
 	Name string
 	Grade uint
@@ -64,15 +69,15 @@ func UserFromToken(token string) (UserData, error) {
 		out.Name = fmt.Sprint(data["name"])
 	}
 
-	// Is the email in admins.txt?
-	if adminsData, err := ioutil.ReadFile("admins.txt"); err == nil {
+	// Is the email in admins list?
+	if adminsData, err := ioutil.ReadFile(AdminListPath); err == nil {
 		for _, line := range strings.Split(string(adminsData), "\n") {
 			if out.Email == line {
 				out.Admin = true
 			}			
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "Error reading admins.txt: %s\n", err.Error())
+		fmt.Fprintf(os.Stderr, "Error reading admins list: %s\n", err.Error())
 	}
 
 	return out, nil
@@ -93,7 +98,7 @@ func UserFromEmail (email string) UserData {
 var StudentList = make(map[string]UserData)
 
 func StudentListInit() error {
-	file, err := os.Open("students.csv")
+	file, err := os.Open(StudentListPath)
 	if err != nil {
 		return err
 	}

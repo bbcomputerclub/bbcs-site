@@ -17,7 +17,7 @@ import (
 )
 
 func DBPath (grade uint) string {
-	return "./data-" + strconv.FormatUint(uint64(grade), 10) + ".json"
+	return "./data/entries-" + strconv.FormatUint(uint64(grade), 10) + ".json"
 }
 
 type DBEntry struct {
