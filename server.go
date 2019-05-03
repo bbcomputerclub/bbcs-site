@@ -107,8 +107,10 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		grades := make(map[uint]bool)
 		out.Students = make(map[uint][]UserData)
 		for _, student := range StudentList {
-			out.Students[student.RealGrade()] = append(out.Students[student.RealGrade()], student)
-			grades[student.RealGrade()] = true
+			if student.RealGrade() <= 12 {
+				out.Students[student.RealGrade()] = append(out.Students[student.RealGrade()], student)
+				grades[student.RealGrade()] = true
+			}
 		}
 
 		for grade, _ := range grades {

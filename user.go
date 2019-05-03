@@ -44,7 +44,11 @@ func (u UserData) RealGrade() uint {
 }
 
 func (u UserData) Required() uint {
-	return (u.RealGrade() - 8) * 20
+	if u.RealGrade() <= 12 {
+		return (u.RealGrade() - 8) * 20
+	} else {
+		return 80
+	}
 }
 
 /* Passes token through Google servers to validate it */
