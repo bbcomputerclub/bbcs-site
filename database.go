@@ -28,6 +28,7 @@ type DBEntry struct {
 	ContactName string
 	ContactEmail string
 	ContactPhone uint
+	Description string
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -55,6 +56,8 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 			if ok {
 				entry.ContactPhone = uint(h)
 			}
+		case "description":
+			entry.Description = fmt.Sprint(val)
 		}
 	}
 	return nil
@@ -74,7 +77,10 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 		out["contact_email"] = entry.ContactEmail
 	}
 	if entry.ContactPhone != 0 {
-		out["contact_phone"] = entry.ContactPhone	
+		out["contact_phone"] = entry.ContactPhone
+	}
+	if entry.Description != "" {
+		out["description"] = entry.Description
 	}
 	return json.Marshal(out)
 }
@@ -209,6 +215,7 @@ func DBEntryFromQuery(query url.Values) *DBEntry {
 		Organization: query.Get("org"),
 		ContactName: query.Get("contactname"),
 		ContactEmail: query.Get("contactemail"),
+		Description: query.Get("description"),
 		ContactPhone: uint(contactPhone),
 	}
 }
