@@ -11,6 +11,7 @@ import (
 	"io"
 	"encoding/csv"
 	"strconv"
+	"time"
 )
 
 const (
@@ -31,6 +32,15 @@ func (u UserData) Total() uint {
 
 func (u UserData) CanEdit(entry *DBEntry) bool {
 	return u.Admin || entry.Editable()
+}
+
+func (u UserData) RealGrade() uint {
+	now := time.Now()
+    grade := uint(now.Year()) - u.Grade + 12
+    if now.Month() >= time.September {
+		grade += 1
+	}
+    return grade
 }
 
 /* Passes token through Google servers to validate it */
