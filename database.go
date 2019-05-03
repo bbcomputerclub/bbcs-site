@@ -29,6 +29,7 @@ type DBEntry struct {
 	ContactEmail string
 	ContactPhone uint
 	Description string
+	LastModified time.Time
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -58,6 +59,8 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 			}
 		case "description":
 			entry.Description = fmt.Sprint(val)
+		case "last_modified":
+			entry.LastModified, _ = time.Parse("2006-01-02", fmt.Sprint(val))
 		}
 	}
 	return nil
@@ -69,6 +72,7 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 		"hours": entry.Hours,
 		"date": entry.Date.Format("2006-01-02"),
 		"org": entry.Organization,
+		"last_modified": entry.LastModified.Format("2006-01-02"),
 	}
 	if entry.ContactName != "" {
 		out["contact_name"] = entry.ContactName
@@ -217,5 +221,6 @@ func DBEntryFromQuery(query url.Values) *DBEntry {
 		ContactEmail: query.Get("contactemail"),
 		Description: query.Get("description"),
 		ContactPhone: uint(contactPhone),
+		LastModified: time.Now(),
 	}
 }

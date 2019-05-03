@@ -44,6 +44,10 @@
 				</div>
 
 				<textarea class="textfield" placeholder="Description" name="description">{{.Entry.Description}}</textarea>
+
+				{{if ne .Action "Add"}}
+				<div style="margin-top:8px"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
+				{{end}}
 				
 				{{if ne .Action "View"}}
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
