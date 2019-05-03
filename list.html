@@ -22,7 +22,7 @@
 	<body>
 		<div class="title {{if .User.Admin}}with-icon{{end}}">
 			{{- if .User.Admin}}
-				<a href="/admin" class="material-icons icon">&#xe5c4;</a>
+				<a href="/admin" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
 			{{end -}}
 			<h1 style="flex-grow:1">{{.Student.Name}}'s <span class="hide-med">community service</span> hours</h1>
 			<span>{{.User.Email}}</span>
@@ -31,7 +31,7 @@
 		<div class="title-spacer"></div>
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
 			<span style="float:right">
-			{{if lt .Student.Total .Student.Required}}<span class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;" title="{{.Student.Required}} hours required">&#xe002;</span>{{end}}
+			{{if lt .Student.Total .Student.Required}}<span aria-label="Not enough hours" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;" title="{{.Student.Required}} hours required">&#xe002;</span>{{end}}
 			<b>{{.Student.Total}}</b></span></main>
 		<ul class="list linked">
 		{{- $global := .}}
