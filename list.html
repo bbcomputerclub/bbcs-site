@@ -31,7 +31,7 @@
 		<div class="title-spacer"></div>
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
 			<span style="float:right">
-			{{if lt .Student.Total 80}}<span class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;" title="80 hours required">&#xe002;{{end}}</span>
+			{{if lt .Student.Total .Student.Required}}<span class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;" title="{{.Student.Required}} hours required">&#xe002;</span>{{end}}
 			<b>{{.Student.Total}}</b></span></main>
 		<ul class="list linked">
 		{{- $global := .}}

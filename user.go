@@ -43,6 +43,10 @@ func (u UserData) RealGrade() uint {
     return grade
 }
 
+func (u UserData) Required() uint {
+	return (u.RealGrade() - 8) * 20
+}
+
 /* Passes token through Google servers to validate it */
 func UserFromToken(token string) (UserData, error) {
 	// Next 8 lines: Retrieves data from Google servers
