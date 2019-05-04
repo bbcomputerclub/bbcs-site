@@ -39,7 +39,10 @@
 			{{if $entry}}
 				<li><a href="/edit?entry={{$index}}&user={{$global.Student.Email}}">
 				{{$entry.Name}}
-				<span style="float:right">{{$entry.Hours}}</span>
+				<div style="float:right">
+				<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
+				<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+				</div>
 				</a></li>
 			{{end}}
 		{{end -}}
