@@ -65,7 +65,13 @@ func (d FileHandlerData) Action() string {
 }
 
 func (d FileHandlerData) StudentEntries() []*DBEntry {
-	return DBList(d.Student.Email, d.Student.Grade)
+	list := DBList(d.Student.Email, d.Student.Grade)
+
+	sort.Slice(list, func (i, j int) bool {
+		return list[i].Date.After(list[j].Date)
+	})
+
+	return list
 }
 
 func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
