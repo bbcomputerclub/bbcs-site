@@ -399,7 +399,7 @@ func main() {
 		DBRemove(student.Email, student.Grade, index)
 
 		// Redirect
-		w.Header().Set("Location", "/list")
+		w.Header().Set("Location", "/list?user=" + student.Email)
 		w.WriteHeader(302)
 	})
 
