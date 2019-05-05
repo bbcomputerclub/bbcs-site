@@ -17,12 +17,15 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 		<meta name="theme-color" content="#26428b">
 		<link rel="manifest" href="/manifest.json">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
 	</head>
 	<body>
 		{{if ne .Action "View"}}
 		<form action="/update" method="POST">
 		{{end}}
-			<div class="title">
+			<div class="title with-icon">
+				<a href="/list" class="material-icons icon" aria-label="Back" onclick="return confirm('Leave? Changes will be lost')">&#xe5c4;</a>
 				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}></h1>
 				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>		
