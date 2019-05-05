@@ -28,7 +28,7 @@ func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, er
 		return UserData{}, UserData{}, errors.New("Can't sign in: " + err.Error())
 	}
 	
-	if user.Admin && len(query.Get("user")) != 0{
+	if user.Admin() && len(query.Get("user")) != 0{
 		return user, UserFromEmail(query.Get("user")), nil
 	} else {
 		return user, user, nil 
@@ -57,7 +57,7 @@ func (d FileHandlerData) Action() string {
 	switch {
 	case d.EntryIndex < 0:
 		return ACTION_ADD
-	case !d.Entry.Editable() && !d.User.Admin:
+	case !d.Entry.Editable() && !d.User.Admin():
 		return ACTION_VIEW
 	default:
 		return ACTION_EDIT
@@ -109,7 +109,7 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		return nil, err
 	}
 
-	if out.User.Admin {
+	if out.User.Admin() {
 		grades := make(map[uint]bool)
 		out.Students = make(map[uint][]UserData)
 		for _, student := range StudentList {
@@ -255,7 +255,7 @@ func main() {
 		redirect := r.URL.Query().Get("redirect")
 		redirectEsc, err := url.QueryUnescape(redirect)
 		if len(redirect) == 0 || err != nil {
-			if user.Admin {
+			if user.Admin() {
 				w.Header().Set("Location", "/admin")
 			} else {
 				w.Header().Set("Location", "/list")			

@@ -20,10 +20,23 @@ const (
 )
 
 type UserData struct {
-	Name string
-	Grade uint
-	Email string
-	Admin bool
+	Name string // Name
+	Grade uint // Graduation Year
+	Email string // Email
+}
+
+func (u UserData) Admin() bool {
+	// Is the email in admins list?
+	if adminsData, err := ioutil.ReadFile(AdminListPath); err == nil {
+		for _, line := range strings.Split(string(adminsData), "\n") {
+			if u.Email == line {
+                return true
+			}			
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Error reading admins list: %s\n", err.Error())
+	}
+    return false
 }
 
 func (u UserData) Total() uint {
@@ -31,7 +44,7 @@ func (u UserData) Total() uint {
 }
 
 func (u UserData) CanEdit(entry *DBEntry) bool {
-	return u.Admin || entry.Editable()
+	return u.Admin() || entry.Editable()
 }
 
 func (u UserData) RealGrade() uint {
@@ -79,23 +92,11 @@ func UserFromToken(token string) (UserData, error) {
 
 	
 	out, ok := StudentList[fmt.Sprint(data["email"])]
-	out.Admin = false
 
 	// Create UserData struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
 	if !ok {
 		out.Email = fmt.Sprint(data["email"])
 		out.Name = fmt.Sprint(data["name"])
-	}
-
-	// Is the email in admins list?
-	if adminsData, err := ioutil.ReadFile(AdminListPath); err == nil {
-		for _, line := range strings.Split(string(adminsData), "\n") {
-			if out.Email == line {
-				out.Admin = true
-			}			
-		}
-	} else {
-		fmt.Fprintf(os.Stderr, "Error reading admins list: %s\n", err.Error())
 	}
 
 	return out, nil
@@ -106,7 +107,7 @@ func UserFromEmail (email string) UserData {
 	if ok {
 		return data
 	} else {
-		return UserData{Email:email, Name:email, Admin:false, Grade:0}
+		return UserData{Email:email, Name:email, Grade:0}
 	}
 }
 
@@ -147,7 +148,6 @@ func StudentListInit() error {
 			Name: record[0],
 			Grade: uint(grade),
 			Email: record[2],
-			Admin: false,
 		}
 	}
 	
