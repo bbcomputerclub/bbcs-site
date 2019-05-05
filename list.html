@@ -36,8 +36,8 @@
 		<ul class="list linked">
 		{{- $global := .}}
 		{{- range $id := .StudentEntriesId}}
-			{{- $entry := (index $global.StudentEntries $id) -}}
-			{{if $entry}}
+			{{- $entry := (index $global.StudentEntries $id)}}
+			{{- if $entry}}
 				<li><a href="/edit?entry={{$id}}&user={{$global.Student.Email}}">
 				{{$entry.Name}}
 				<div style="float:right">
@@ -45,7 +45,7 @@
 				<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
 				</div>
 				</a></li>
-			{{end}}
+			{{end -}}
 		{{end -}}
 		</ul>
 		<a href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
