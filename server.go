@@ -43,6 +43,9 @@ type FileHandlerData struct {
 	User UserData	// Current logged-in user
 	Student UserData // Which student he is looking at
 
+    StudentEntries map[uint]*DBEntry
+	StudentEntriesId []uint
+
 	Students map[uint][]UserData
 	Grades []uint
 }
@@ -62,16 +65,6 @@ func (d FileHandlerData) Action() string {
 	default:
 		return ACTION_EDIT
 	}
-}
-
-func (d FileHandlerData) StudentEntries() []*DBEntry {
-	list := DBList(d.Student.Email, d.Student.Grade)
-
-	sort.Slice(list, func (i, j int) bool {
-		return list[i].Date.After(list[j].Date)
-	})
-
-	return list
 }
 
 func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -127,6 +120,17 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 			return out.Grades[i] > out.Grades[j]
 		})
 	}
+
+    out.StudentEntries = make(map[uint]*DBEntry)
+    entrylist := DBList(out.Student.Email, out.Student.Grade)
+    for i, entry := range entrylist {
+        out.StudentEntries[uint(i)] = entry
+		out.StudentEntriesId = append(out.StudentEntriesId, uint(i))		
+    }
+
+	sort.Slice(out.StudentEntriesId, func (i, j int) bool {
+		return out.StudentEntries[out.StudentEntriesId[i]].Date.After(out.StudentEntries[out.StudentEntriesId[j]].Date)
+	})
 
 	for _, slice := range out.Students {
 		sort.Slice(slice, func (i, j int) bool {

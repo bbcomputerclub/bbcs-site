@@ -35,9 +35,10 @@
 			<b>{{.Student.Total}}</b></span></main>
 		<ul class="list linked">
 		{{- $global := .}}
-		{{- range $index, $entry := .StudentEntries}}
+		{{- range $id := .StudentEntriesId}}
+			{{- $entry := (index $global.StudentEntries $id) -}}
 			{{if $entry}}
-				<li><a href="/edit?entry={{$index}}&user={{$global.Student.Email}}">
+				<li><a href="/edit?entry={{$id}}&user={{$global.Student.Email}}">
 				{{$entry.Name}}
 				<div style="float:right">
 				<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
