@@ -30,6 +30,7 @@ type DBEntry struct {
 	ContactPhone uint
 	Description string
 	LastModified time.Time
+	Flagged bool
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -92,6 +93,23 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 func (entry *DBEntry) Editable() bool {
 	duration, _ := time.ParseDuration("1h")
 	return time.Since(entry.Date) <= duration * 24 * 30
+}
+
+func (entry *DBEntry) CalcFlagged() {
+	entry.Flagged = false
+	if entry.Hours >= 10 {
+		entry.Flagged = true
+		return
+	}
+	keywords := []string{"cit", "counselor", "camp"}
+	for _, keyword := range keywords {
+		if strings.Contains(strings.ToLower(entry.Name), keyword) ||
+			strings.Contains(strings.ToLower(entry.Description), keyword) ||
+			strings.Contains(strings.ToLower(entry.Organization), keyword) {
+			entry.Flagged = true
+			return
+		}
+	}
 }
 
 // Represents a document that contains all entries

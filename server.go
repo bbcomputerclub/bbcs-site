@@ -330,7 +330,7 @@ func main() {
 		if r.Method != "POST" && r.Method != "PUT" {
 			w.Header().Set("Allow", "POST, PUT")
 			w.WriteHeader(405)
-			return			
+			return
 		}
 		
 		r.ParseForm()
@@ -356,6 +356,8 @@ func main() {
 			w.WriteHeader(403)
 			return
 		}
+
+		newEntry.CalcFlagged()
 
 		// Make changes
 		DBSet(student.Email, student.Grade, newEntry, index)
