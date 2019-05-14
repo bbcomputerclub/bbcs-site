@@ -60,7 +60,7 @@
 		<form action="/update" method="POST">
 		{{end}}
 			<div class="title with-icon">
-				<a href="/list" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
+				<a href="/list?user={{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
 				<h1 style="flex-grow:1;min-width:0;"><input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield dark" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}></h1>
 				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>		
