@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+	{{if .User.Admin}}
+	<head>
+		<title>Suspicious Entries</title>
+		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
+		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
+		<link rel="apple-touch-icon" href="/icons/192.png">
+
+		<meta name="generator" content="Micro: a terminal-based plain text editor">
+		<meta name="description" content="Enter your community service hours">
+		<meta name="application-name" content="BBCS">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		 
+		<link rel="stylesheet" href="style.css">
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+		<meta name="theme-color" content="#26428b">
+		<link rel="manifest" href="/manifest.json">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+		<style>
+.list:empty::after {
+	content: "No suspicious entries :)";
+}
+		</style>
+	</head>
+	<body>
+		<div class="title with-icon">
+			<a href="/admin" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
+			<h1 style="flex-grow:1">Suspicious Entries</h1>
+			<span>{{.User.Email}}</span>
+			<a href="/signout" class="button light">Sign out</a>		
+		</div>
+		<div class="title-spacer"></div>
+		<ul class="list linked">
+		{{- $global := .}}
+		{{- range $grade, $students := $global.Students}}
+			{{- range $student := $students}}
+				{{- range $id, $entry := $student.Entries}}
+					{{- if $entry}}{{if $entry.Flagged}}
+						<li><a href="/edit?entry={{$id}}&user={{$student.Email}}">
+							{{$entry.Name}}
+							<div style="float:right">
+								<span style="margin-right:48px">{{$student.Name}}</span>
+								<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+							</div>
+						</li>
+					{{end}}{{end -}}
+				{{end -}}
+			{{end -}}
+		{{end -}}
+		</ul>
+	</body>
+	{{else}}
+   	<head>
+   		<title>Redirect</title>
+   		<meta http-equiv="refresh" content="0;url=/list">
+   	</head>
+   {{end}}
+</html>

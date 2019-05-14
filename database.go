@@ -62,6 +62,10 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 			entry.Description = fmt.Sprint(val)
 		case "last_modified":
 			entry.LastModified, _ = time.Parse("2006-01-02", fmt.Sprint(val))
+		case "flagged":
+			if valb, ok := val.(bool); ok {
+				entry.Flagged = valb
+			}
 		}
 	}
 	return nil
@@ -86,6 +90,9 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 	}
 	if entry.Description != "" {
 		out["description"] = entry.Description
+	}
+	if entry.Flagged {
+		out["flagged"] = true
 	}
 	return json.Marshal(out)
 }

@@ -43,6 +43,10 @@ func (u UserData) Total() uint {
 	return DBTotal(u.Email, u.Grade)
 }
 
+func (u UserData) Entries() []*DBEntry {
+	return DBList(u.Email, u.Grade)
+}
+
 func (u UserData) CanEdit(entry *DBEntry) bool {
 	return u.Admin() || entry.Editable()
 }

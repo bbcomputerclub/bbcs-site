@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	{{if .User.Admin}}
 	<head>
 		<title>Admin Dashboard</title>
@@ -48,6 +48,12 @@ h3 {
 		padding-right: 40px;
 	}
 }
+#flagged {
+	display: block;
+	margin: auto;
+	width: 300px;
+	margin-top:16px;margin-bottom:16px;
+}
 @media print {
 	body {
 		padding: 0 !important;
@@ -56,6 +62,9 @@ h3 {
 	#roster {
 		padding: 0 !important;
 		margin: 0 -32px !important;
+	}
+	#flagged {
+		display: none;
 	}
 }
 		</style>
@@ -67,6 +76,7 @@ h3 {
 			<a href="/signout" class="button light">Sign out</a>		
 		</div>
 		<div class="title-spacer"></div>
+		<a class="button strong" id="flagged" href="/flagged">View Suspicious Entries</a>
 		<div id="roster">
 			{{- $global := .}}
 			{{range $grade := .Grades}}

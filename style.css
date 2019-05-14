@@ -85,7 +85,6 @@ body {
 		margin-top: 128px;
 		font-size: 24px;
 		text-align: center;
-		content: "No hours yet :(" /* TODO: Insert a quirky empty state */
 	}
 
 main {

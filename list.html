@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<title>{{.Student.Name}}'s hours</title>
 		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
@@ -25,6 +25,9 @@
 		display: none;
 	}
 }
+#hours:empty::after {
+	content: "No hours yet :(" /* TODO: Insert a quirky empty state */
+}
 		</style>
 	<body>
 		<div class="title {{if .User.Admin}}with-icon{{end}}">
@@ -40,7 +43,7 @@
 			<span style="float:right" {{- if lt .Student.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{.Student.RealGrade}}th grade">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
 			<b>{{.Student.Total}}</b></span></main>
-		<ul class="list linked">
+		<ul class="list linked" id="hours">
 		{{- $global := .}}
 		{{- range $id := .StudentEntriesId}}
 			{{- $entry := (index $global.StudentEntries $id)}}

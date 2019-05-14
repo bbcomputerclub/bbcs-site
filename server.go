@@ -287,6 +287,7 @@ func main() {
 	http.Handle("/list", FileHandler("list.html"))
 	http.Handle("/admin", FileHandler("admin.html"))
 	http.Handle("/edit", FileHandler("edit.html"))
+	http.Handle("/flagged", FileHandler("flagged.html"))
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
