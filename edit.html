@@ -19,6 +19,41 @@
 		<link rel="manifest" href="/manifest.json">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
+		<style>
+@media print {
+	.textfield {
+		border: 0 !important;
+		-moz-appearance: textfield;
+		-webkit-appearance: textfield;
+		appearance: textfield;
+	}
+	input::-webkit-outer-spin-button,
+	input::-webkit-inner-spin-button {
+		/* display: none; <- Crashes Chrome on hover */
+		-webkit-appearance: none;
+	}
+    ::-webkit-input-placeholder { /* WebKit browsers */
+        color: transparent;
+    }
+    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+       color: transparent;
+    }
+    ::-moz-placeholder { /* Mozilla Firefox 19+ */
+       color: transparent;
+    }
+    :-ms-input-placeholder { /* Internet Explorer 10+ */
+       color: transparent;
+    }
+
+	.button {
+		display: none;
+	}
+
+	#lastmodified {
+		display: none;
+	}
+}
+		</style>
 	</head>
 	<body>
 		{{if ne .Action "View"}}
@@ -49,7 +84,7 @@
 				<textarea class="textfield" placeholder="Description" name="description">{{.Entry.Description}}</textarea>
 
 				{{if ne .Action "Add"}}
-				<div style="margin-top:8px"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
+				<div style="margin-top:8px" id="lastmodified"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
 				{{end}}
 				
 				{{if ne .Action "View"}}

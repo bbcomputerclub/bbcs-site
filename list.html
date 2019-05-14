@@ -18,7 +18,14 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 		<meta name="theme-color" content="#26428b">
 		<link rel="manifest" href="/manifest.json">
-	</head>
+
+		<style>
+@media print {
+	#add {
+		display: none;
+	}
+}
+		</style>
 	<body>
 		<div class="title {{if .User.Admin}}with-icon{{end}}">
 			{{- if .User.Admin}}
@@ -30,7 +37,7 @@
 		</div>
 		<div class="title-spacer"></div>
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
-			<span style="float:right" {{- if lt .Student.Total .Student.Required}} title="{{.Student.Required}} hours required by the end of {{.Student.RealGrade}}th grade">
+			<span style="float:right" {{- if lt .Student.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{.Student.RealGrade}}th grade">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
 			<b>{{.Student.Total}}</b></span></main>
 		<ul class="list linked">
@@ -48,6 +55,6 @@
 			{{end -}}
 		{{end -}}
 		</ul>
-		<a href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
+		<a id="add" href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
    </body>
 </html>
