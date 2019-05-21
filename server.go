@@ -70,7 +70,7 @@ func (d FileHandlerData) Action() string {
 func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	data, err := dataFromRequest(r)
 	if err != nil {
-		w.Header().Set("Refresh", "0;url=/?" + r.URL.String() + "#error:" + url.QueryEscape(err.Error()))
+		w.Header().Set("Refresh", "0;url=/?" + url.QueryEscape(r.URL.String()) + "#error:" + url.QueryEscape(err.Error()))
 		w.WriteHeader(400)
 		return
 	}

@@ -55,7 +55,7 @@
 	    var contactname = encodeURIComponent(document.getElementById("contactname").value.trim())
 	    var contactemail = encodeURIComponent(document.getElementById("contactemail").value.trim())
 	    var contactphone = document.getElementById("contactphone").value.trim().replace(/[^0-9]+/g, "")
-	    var link = "https://" + location.host + "/add?";
+	    var link = location.protocol + "//" + location.host + "/add?";
 		if (name) {
 			link += "name=" + name + "&";
 		}
