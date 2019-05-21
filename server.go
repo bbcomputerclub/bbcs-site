@@ -124,8 +124,10 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
     out.StudentEntries = make(map[uint]*DBEntry)
     entrylist := DBList(out.Student.Email, out.Student.Grade)
     for i, entry := range entrylist {
-        out.StudentEntries[uint(i)] = entry
-		out.StudentEntriesId = append(out.StudentEntriesId, uint(i))		
+		if entry != nil {
+	        out.StudentEntries[uint(i)] = entry
+			out.StudentEntriesId = append(out.StudentEntriesId, uint(i))
+		}
     }
 
 	sort.Slice(out.StudentEntriesId, func (i, j int) bool {
