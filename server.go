@@ -408,6 +408,40 @@ func main() {
 		w.WriteHeader(302)
 	})
 
+	// Marks an entry as not suspicious
+	http.HandleFunc("/unflag", func (w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" && r.Method != "PU	T" {
+			w.Header().Set("Allow", "POST, PUT")
+			w.WriteHeader(405)
+			return			
+		}
+
+		r.ParseForm()
+		query := r.PostForm
+
+		user, student, err := UsersFromRequest(r, query)
+		if err != nil || !user.Admin() {
+			w.WriteHeader(403)
+			return
+		}
+
+		// Get entry
+		index, err := strconv.Atoi(query.Get("entry"))
+		if err != nil {
+			w.WriteHeader(400)
+			return
+		}
+
+		// Make changes
+		entry := DBGet(student.Email, student.Grade, index)
+		entry.Flagged = false
+		DBSet(student.Email, student.Grade, entry, index)
+
+		// Redirect
+		w.Header().Set("Location", "/list?user=" + student.Email)
+		w.WriteHeader(302)
+	})
+
 	port := uint64(0)
 	var err error = nil
 	switch len(os.Args) {

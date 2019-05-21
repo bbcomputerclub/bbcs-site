@@ -92,7 +92,10 @@
 					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
 					<span style="float:right;margin-top:8px">
 						{{if eq .Action "Edit"}}
-							<button formaction="/delete" class="button" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
+							{{if and .User.Admin .Entry.Flagged}}
+								<button formaction="/unflag" class="button" type="submit" style="margin-right:8px">Not Suspicious</button>
+							{{end}}
+							<button formaction="/delete" class="button" type="submit" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
 							<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-left:8px">Duplicate</a>
 						{{end}}
 						<a class="button" style="margin-left:8px" href="/list?user={{.Student.Email}}">Cancel</a> 
