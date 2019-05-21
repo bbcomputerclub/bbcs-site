@@ -321,6 +321,8 @@ func main() {
 			return
 		}
 
+		entry.Date = time.Now()
+
 		newQuery := entry.EncodeQuery()
 		newQuery.Set("entry", "-1")
 		newQuery.Set("user", student.Email)
@@ -438,7 +440,7 @@ func main() {
 		DBSet(student.Email, student.Grade, entry, index)
 
 		// Redirect
-		w.Header().Set("Location", "/list?user=" + student.Email)
+		w.Header().Set("Location", "/flagged")
 		w.WriteHeader(302)
 	})
 
