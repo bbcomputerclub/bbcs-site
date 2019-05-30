@@ -165,7 +165,7 @@ func main() {
 			return
 		}
 	
-		http.ServeFile(w, r, "html/login.html")
+		http.ServeFile(w, r, "files/login.html")
 	})
 
 	http.HandleFunc("/icons/", func (w http.ResponseWriter, r *http.Request) {
@@ -223,15 +223,15 @@ func main() {
 	})
 	
 	http.HandleFunc("/style.css", func (w http.ResponseWriter, r *http.Request) { 
-		http.ServeFile(w, r, "style.css")
+		http.ServeFile(w, r, "files/style.css")
 	})
 
 	http.HandleFunc("/manifest.json", func (w http.ResponseWriter, r *http.Request) { 
-		http.ServeFile(w, r, "manifest.json")
+		http.ServeFile(w, r, "files/manifest.json")
 	})
 
 	http.HandleFunc("/generator", func (w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "html/generator.html")
+		http.ServeFile(w, r, "files/generator.html")
 	})
 
 	http.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
@@ -282,10 +282,10 @@ func main() {
 		w.WriteHeader(303)
 	})
 	
-	http.Handle("/list", FileHandler("html/list.html"))
-	http.Handle("/admin", FileHandler("html/admin.html"))
-	http.Handle("/edit", FileHandler("html/edit.html"))
-	http.Handle("/flagged", FileHandler("html/flagged.html"))
+	http.Handle("/list", FileHandler("files/list.html"))
+	http.Handle("/admin", FileHandler("files/admin.html"))
+	http.Handle("/edit", FileHandler("files/edit.html"))
+	http.Handle("/flagged", FileHandler("files/flagged.html"))
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
