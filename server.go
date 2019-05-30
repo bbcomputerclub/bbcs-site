@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"errors"
 	"sort"
+	"path"
 )
 
 // Returns user and student
@@ -75,7 +76,7 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := template.New(string(f)).Funcs(template.FuncMap{
+	t, err := template.New(path.Base(string(f))).Funcs(template.FuncMap{
 		"time": func (from int) time.Time {
 			return time.Now().AddDate(0,0,from)
 		},
@@ -164,7 +165,7 @@ func main() {
 			return
 		}
 	
-		http.ServeFile(w, r, "login.html")
+		http.ServeFile(w, r, "html/login.html")
 	})
 
 	http.HandleFunc("/icons/", func (w http.ResponseWriter, r *http.Request) {
@@ -230,15 +231,10 @@ func main() {
 	})
 
 	http.HandleFunc("/generator", func (w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "generator.html")
+		http.ServeFile(w, r, "html/generator.html")
 	})
 
 	http.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
-
-	http.HandleFunc("/calendar", func (w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "calendar.html")
-	})
-
 
 	/* GET /signin
 	 *
@@ -286,10 +282,10 @@ func main() {
 		w.WriteHeader(303)
 	})
 	
-	http.Handle("/list", FileHandler("list.html"))
-	http.Handle("/admin", FileHandler("admin.html"))
-	http.Handle("/edit", FileHandler("edit.html"))
-	http.Handle("/flagged", FileHandler("flagged.html"))
+	http.Handle("/list", FileHandler("html/list.html"))
+	http.Handle("/admin", FileHandler("html/admin.html"))
+	http.Handle("/edit", FileHandler("html/edit.html"))
+	http.Handle("/flagged", FileHandler("html/flagged.html"))
 
 	http.HandleFunc("/add", func (w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
