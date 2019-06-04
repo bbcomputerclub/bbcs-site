@@ -61,7 +61,7 @@
 		{{end}}
 			<div class="title with-icon">
 				<a href="/list?user={{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
-				<h1 style="flex-grow:1">{{.Student.Name}}'s <span class="hide-med">community service</span> hours</h1>
+				<h1 style="flex-grow:1">{{.Action}} entry</h1>
 				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>		
 			</div>
