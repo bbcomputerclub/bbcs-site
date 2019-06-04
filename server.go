@@ -80,6 +80,18 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"time": func(from int) time.Time {
 			return time.Now().AddDate(0, 0, from)
 		},
+		"fmtordinal": func(in uint) string {
+			if in % 10 == 1 && in != 11 {
+				return fmt.Sprint(in) + "st"
+			}
+			if in % 10 == 2 && in != 12 {
+				return fmt.Sprint(in) + "nd"
+			}
+			if in % 10 == 3 && in != 13 {
+				return fmt.Sprint(in) + "rd"
+			}
+			return fmt.Sprint(in) + "th"
+		},
 	}).ParseFiles(string(f))
 	if err != nil {
 		w.WriteHeader(500)

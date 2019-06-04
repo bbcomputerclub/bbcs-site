@@ -23,6 +23,7 @@ type UserData struct {
 	Name  string // Name
 	Grade uint   // Graduation Year
 	Email string // Email
+	Late uint // Years Late
 }
 
 // Get whether the user is an admin.
@@ -56,6 +57,21 @@ func (u UserData) CanEdit(entry *DBEntry) bool {
 	return u.Admin() || entry.Editable()
 }
 
+// Returns # of years they have been in school
+func (u UserData) Years() uint {
+	now := time.Now()
+
+	if uint(now.Year()) >= u.Grade {
+		return 4 - u.Late
+	}
+
+	years := now.Year() - (int(u.Grade) - 4) - int(u.Late)
+	if now.Month() >= time.September {
+		years += 1
+	}
+	return uint(years)
+}
+
 // Returns the grade of the user
 func (u UserData) RealGrade() uint {
 	now := time.Now()
@@ -68,11 +84,7 @@ func (u UserData) RealGrade() uint {
 
 // Returns the # of hours that the student should do
 func (u UserData) Required() uint {
-	if u.RealGrade() <= 12 {
-		return (u.RealGrade() - 8) * 20
-	} else {
-		return 80
-	}
+	return u.Years() * 20
 }
 
 // Passes token through Google servers to validate it. Returns a UserData
@@ -143,7 +155,7 @@ func StudentListInit() error {
 			break
 		}
 
-		if len(record) < 3 {
+		if len(record) < 4 {
 			fmt.Fprintln(os.Stderr, "warning: not enough cells in row '"+strings.Join(record, ",")+"'")
 			continue
 		}
@@ -157,10 +169,16 @@ func StudentListInit() error {
 			return err
 		}
 
+		late, err := strconv.ParseUint(record[3], 10, 8)
+		if err != nil {
+			return err
+		}
+
 		StudentList[record[2]] = UserData{
 			Name:  record[0],
 			Grade: uint(grade),
 			Email: record[2],
+			Late: uint(late),
 		}
 	}
 
