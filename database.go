@@ -3,34 +3,36 @@ package main
 /* Database functions
  *
  * Contains the functions necessary for interfacing with the database
- */ 
+ */
 
 import (
-	"time"
-	"os"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"strconv"
+	"strings"
+	"time"
 )
 
-func DBPath (grade uint) string {
+// Returns the path of the entries for grade `grade`
+func DBPath(grade uint) string {
 	return "./data/entries-" + strconv.FormatUint(uint64(grade), 10) + ".json"
 }
 
+// Represents an entry
 type DBEntry struct {
-	Name string
-	Hours uint
-	Date time.Time
+	Name         string
+	Hours        uint
+	Date         time.Time
 	Organization string
-	ContactName string
+	ContactName  string
 	ContactEmail string
 	ContactPhone uint
-	Description string
+	Description  string
 	LastModified time.Time
-	Flagged bool
+	Flagged      bool
 }
 
 func (entry *DBEntry) UnmarshalJSON(data []byte) error {
@@ -51,9 +53,9 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 			entry.Organization = fmt.Sprint(val)
 		case "contact_name":
 			entry.ContactName = fmt.Sprint(val)
-		case "contact_email":	
+		case "contact_email":
 			entry.ContactEmail = fmt.Sprint(val)
-		case "contact_phone": 
+		case "contact_phone":
 			h, ok := val.(float64)
 			if ok {
 				entry.ContactPhone = uint(h)
@@ -72,11 +74,11 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 }
 
 func (entry *DBEntry) MarshalJSON() ([]byte, error) {
-	out := map[string]interface{} {
-		"name": entry.Name,
-		"hours": entry.Hours,
-		"date": entry.Date.Format("2006-01-02"),
-		"org": entry.Organization,
+	out := map[string]interface{}{
+		"name":          entry.Name,
+		"hours":         entry.Hours,
+		"date":          entry.Date.Format("2006-01-02"),
+		"org":           entry.Organization,
 		"last_modified": entry.LastModified.Format("2006-01-02"),
 	}
 	if entry.ContactName != "" {
@@ -97,11 +99,13 @@ func (entry *DBEntry) MarshalJSON() ([]byte, error) {
 	return json.Marshal(out)
 }
 
+// Returns whether the entry is at least 30 days old
 func (entry *DBEntry) Editable() bool {
 	duration, _ := time.ParseDuration("1h")
-	return time.Since(entry.Date) <= duration * 24 * 30
+	return time.Since(entry.Date) <= duration*24*30
 }
 
+// Set Flagged to true or false
 func (entry *DBEntry) CalcFlagged() {
 	entry.Flagged = false
 	if entry.Hours >= 10 {
@@ -127,14 +131,14 @@ func DBDocumentGet(grade uint) DBDocument {
 	body, err := ioutil.ReadFile(DBPath(grade))
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)	
+		fmt.Fprintln(os.Stderr, err)
 		return make(DBDocument)
 	}
 
 	doc := make(DBDocument)
 	err = json.Unmarshal(body, &doc)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)	
+		fmt.Fprintln(os.Stderr, err)
 	}
 	return doc
 }
@@ -142,7 +146,7 @@ func DBDocumentGet(grade uint) DBDocument {
 /* Adds / changes an entry */
 func DBSet(email string, grade uint, entry *DBEntry, index int) {
 	doc := DBDocumentGet(grade)
-	
+
 	if index < 0 {
 		doc[email] = append(doc[email], entry)
 	} else if index < len(doc[email]) {
@@ -170,7 +174,7 @@ func DBList(email string, grade uint) []*DBEntry {
 /* The default entry. */
 func DBEntryDefault() *DBEntry {
 	return &DBEntry{
-		Date: time.Now(),
+		Date:  time.Now(),
 		Hours: 1,
 	}
 }
@@ -222,6 +226,7 @@ func (entry *DBEntry) EncodeQuery() url.Values {
 	return out
 }
 
+// Creates an entry from a url.Values
 func DBEntryFromQuery(query url.Values) *DBEntry {
 	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
 	if err != nil {
@@ -232,19 +237,19 @@ func DBEntryFromQuery(query url.Values) *DBEntry {
 		date = time.Now()
 	}
 
-	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "" , "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "", "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
 	if err != nil {
 		contactPhone = 0
 	}
 
 	return &DBEntry{
-		Name: query.Get("name"),
-		Hours: uint(hours),
-		Date: date,
+		Name:         query.Get("name"),
+		Hours:        uint(hours),
+		Date:         date,
 		Organization: query.Get("org"),
-		ContactName: query.Get("contactname"),
+		ContactName:  query.Get("contactname"),
 		ContactEmail: query.Get("contactemail"),
-		Description: query.Get("description"),
+		Description:  query.Get("description"),
 		ContactPhone: uint(contactPhone),
 		LastModified: time.Now(),
 	}

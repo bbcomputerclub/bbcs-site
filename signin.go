@@ -1,9 +1,9 @@
 package main
 
 import (
-	"strconv"
 	"errors"
 	"math/rand"
+	"strconv"
 )
 
 // Maps session IDs to users
