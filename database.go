@@ -143,6 +143,20 @@ func DBDocumentGet(grade uint) DBDocument {
 	return doc
 }
 
+
+func DBDocumentWrite(grade uint, doc DBDocument) error {
+	newbody, err := json.Marshal(doc)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return err
+	}
+	err = ioutil.WriteFile(DBPath(grade), newbody, 0644)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	return err
+}
+
 /* Adds / changes an entry */
 func DBSet(email string, grade uint, entry *DBEntry, index int) {
 	doc := DBDocumentGet(grade)
@@ -153,22 +167,27 @@ func DBSet(email string, grade uint, entry *DBEntry, index int) {
 		doc[email][index] = entry
 	}
 
-	newbody, err := json.Marshal(doc)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	err = ioutil.WriteFile(DBPath(grade), newbody, 0644)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
+	DBDocumentWrite(grade, doc)
 }
 
 /* Lists the entries */
 func DBList(email string, grade uint) []*DBEntry {
 	doc := DBDocumentGet(grade)
-	return doc[email]
+	if len(doc[email]) != 0 {
+		return doc[email]
+	}
+
+	// If that does not exist, check entries-0.json (see #38)
+	defaultdoc := DBDocumentGet(0)
+	if len(defaultdoc[email]) != 0 {
+		doc[email] = defaultdoc[email]
+		delete(defaultdoc, email)
+		DBDocumentWrite(grade, doc)
+		DBDocumentWrite(0, defaultdoc)
+		return doc[email]
+	}
+
+	return nil
 }
 
 /* The default entry. */
