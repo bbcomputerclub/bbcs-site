@@ -23,7 +23,7 @@ type UserData struct {
 	Name  string // Name
 	Grade uint   // Graduation Year
 	Email string // Email
-	Late uint // Years Late
+	Late  uint   // Years Late
 }
 
 // Get whether the user is an admin.
@@ -178,7 +178,7 @@ func StudentListInit() error {
 			Name:  record[0],
 			Grade: uint(grade),
 			Email: record[2],
-			Late: uint(late),
+			Late:  uint(late),
 		}
 	}
 

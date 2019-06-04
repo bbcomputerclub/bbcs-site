@@ -143,7 +143,6 @@ func DBDocumentGet(grade uint) DBDocument {
 	return doc
 }
 
-
 func DBDocumentWrite(grade uint, doc DBDocument) error {
 	newbody, err := json.Marshal(doc)
 	if err != nil {

@@ -81,13 +81,13 @@ func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return time.Now().AddDate(0, 0, from)
 		},
 		"fmtordinal": func(in uint) string {
-			if in % 10 == 1 && in != 11 {
+			if in%10 == 1 && in != 11 {
 				return fmt.Sprint(in) + "st"
 			}
-			if in % 10 == 2 && in != 12 {
+			if in%10 == 2 && in != 12 {
 				return fmt.Sprint(in) + "nd"
 			}
-			if in % 10 == 3 && in != 13 {
+			if in%10 == 3 && in != 13 {
 				return fmt.Sprint(in) + "rd"
 			}
 			return fmt.Sprint(in) + "th"
