@@ -35,7 +35,9 @@
             <input id="contactemail" class="textfield" type="email" placeholder="Contact Email" />
             <input id="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" pattern="[0-9\-\+ ]+" />
         </div>
-	        ​
+
+		<textarea class="textfield" placeholder="Description" id="description"></textarea>
+        ​
         <div>
             <a id="out"></a>
         </div>
@@ -48,38 +50,18 @@
 	}
 
     function createLink() {
-	    var name = encodeURIComponent(document.getElementById("name").value.trim())
-	    var hours = Number(document.getElementById("hours").value);
-	    var date= encodeURIComponent(document.getElementById("date").value.trim())
-	    var org = encodeURIComponent(document.getElementById("org").value.trim())
-	    var contactname = encodeURIComponent(document.getElementById("contactname").value.trim())
-	    var contactemail = encodeURIComponent(document.getElementById("contactemail").value.trim())
-	    var contactphone = document.getElementById("contactphone").value.trim().replace(/[^0-9]+/g, "")
 	    var link = location.protocol + "//" + location.host + "/add?";
-		if (name) {
-			link += "name=" + name + "&";
-		}
-		if (!Number.isNaN(hours) && hours > 0) {
-			link += "hours=" + hours + "&";
-		}
-		if (date) {
-			link += "date=" + date + "&";
-		}
-		if (org) {
-			link += "org=" + org + "&";
-		}
-		if (contactname) {
-			link += "contactname=" + contactname + "&";
-		}
-		if (contactemail) {
-			link += "contactemail=" + contactemail + "&";
-		}
-		if (contactphone) {
-			link += "contactphone=" + contactphone + "&";
+
+		for (var elem of elems) {
+			if (elem.value) {
+				link += elem.id + "=" + encodeURIComponent(elem.value) + "&" ;
+			}
 		}
 
-		document.getElementById("out").innerHTML = link
-		document.getElementById("out").href = link
+        link = link.slice(0, -1);
+
+		document.getElementById("out").innerHTML = link;
+		document.getElementById("out").href = link;
 	}
 
 	createLink();
