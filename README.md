@@ -1,5 +1,5 @@
 # BB-Community-Service
-The proposed community service website. The current one can be found [here](http://www2.blindbrook.org/test/zkcs/login.html).
+The proposed community service website.
 
 ## Building
 ```bash
@@ -11,6 +11,6 @@ go build *.go
 ## `data/` directory
 The data directory contains files that contain information about the students and their hours.
 
-* `students.csv` (required) - a csv file. `Name,GradYear,Email`
-* `entries-XXXX.csv` (where XXXX is the graduation year) - the entries for that grade
+* `students.csv` (required) - a csv file. `Name,GradYear,Email,Late`
+* `entries-XXXX.json` (where XXXX is the graduation year) - the entries for that grade
 * `admins.txt` - a list of admins' emails
