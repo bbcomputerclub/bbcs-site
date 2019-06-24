@@ -57,7 +57,7 @@
 	</head>
 	<body>
 		{{if ne .Action "View"}}
-		<form action="/update" method="POST">
+		<form action="/update" method="POST" oninput="addAlert()">
 		{{end}}
 			<div class="title with-icon">
 				<a href="/list?user={{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}} {{end}}>&#xe5c4;</a>
@@ -67,22 +67,22 @@
 			</div>
 			<div class="title-spacer"></div>		
 			<main>
-				<input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" oninput="addAlert()" class="textfield" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}>
+				<input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}>
 				<div class="flex flex-sm">
-					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" oninput="addAlert()" required value="{{.Entry.Hours}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="date" class="textfield" type="date" {{if not .User.Admin}}min="{{(time -30).Format "2006-01-02"}}"{{end}} placeholder="yyyy-mm-dd" oninput="addAlert()" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="{{.Entry.Date.Format "2006-01-02"}}" placeholder="Date (e.g. 2018-10-31)" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="{{.Entry.Hours}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="date" class="textfield" type="date" {{if not .User.Admin}}min="{{(time -30).Format "2006-01-02"}}"{{end}} placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="{{.Entry.Date.Format "2006-01-02"}}" placeholder="Date (e.g. 2018-10-31)" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
 				<input name="entry" type="hidden" value="{{.EntryIndex}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
-				<input name="org" class="textfield" type="text" placeholder="Service Organization" oninput="addAlert()" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
+				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
 				
 				<div class="flex">
-					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" oninput="addAlert()" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" oninput="addAlert()" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" oninput="addAlert()" {{if ne .Entry.ContactPhone 0}} value="+{{.Entry.ContactPhone}}"{{end}} pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
+					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" {{if ne .Entry.ContactPhone 0}} value="+{{.Entry.ContactPhone}}"{{end}} pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
 
-				<textarea class="textfield" placeholder="Description" oninput="addAlert()" name="description">{{.Entry.Description}}</textarea>
+				<textarea class="textfield" placeholder="Description" name="description">{{.Entry.Description}}</textarea>
 
 				{{if ne .Action "Add"}}
 				<div style="margin-top:8px" id="lastmodified"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
