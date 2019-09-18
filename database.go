@@ -6,23 +6,22 @@ package main
  */
 
 import (
+	"context"
 	"encoding/json"
+	"firebase.google.com/go"
+	"firebase.google.com/go/db"
 	"fmt"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// Returns the path of the entries for grade `grade`
-func DBPath(grade uint) string {
-	return "./data/entries-" + strconv.FormatUint(uint64(grade), 10) + ".json"
-}
-
-// Represents an entry
-type DBEntry struct {
+type Entry struct {
 	Name         string
 	Hours        uint
 	Date         time.Time
@@ -35,7 +34,51 @@ type DBEntry struct {
 	Flagged      bool
 }
 
-func (entry *DBEntry) UnmarshalJSON(data []byte) error {
+func NewEntry(name string, hours uint, org string) *Entry {
+	return &Entry{
+		Name:         name,
+		Hours:        hours,
+		Organization: org,
+		Date:         time.Now(),
+		LastModified: time.Now(),
+	}
+}
+
+func EmptyEntry() *Entry {
+	return &Entry{
+		Hours:        1,
+		Date:         time.Now(),
+		LastModified: time.Now(),
+	}
+}
+
+func (entry *Entry) MarshalJSON() ([]byte, error) {
+	out := map[string]interface{}{
+		"name":          entry.Name,
+		"hours":         entry.Hours,
+		"date":          entry.Date.Format("2006-01-02"),
+		"org":           entry.Organization,
+		"last_modified": entry.LastModified.Format("2006-01-02"),
+	}
+	if entry.ContactName != "" {
+		out["contact_name"] = entry.ContactName
+	}
+	if entry.ContactEmail != "" {
+		out["contact_email"] = entry.ContactEmail
+	}
+	if entry.ContactPhone != 0 {
+		out["contact_phone"] = entry.ContactPhone
+	}
+	if entry.Description != "" {
+		out["description"] = entry.Description
+	}
+	if entry.Flagged {
+		out["flagged"] = true
+	}
+	return json.Marshal(out)
+}
+
+func (entry *Entry) UnmarshalJSON(data []byte) error {
 	m := make(map[string]interface{})
 	json.Unmarshal(data, &m)
 	for key, val := range m {
@@ -73,30 +116,109 @@ func (entry *DBEntry) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (entry *DBEntry) MarshalJSON() ([]byte, error) {
-	out := map[string]interface{}{
-		"name":          entry.Name,
-		"hours":         entry.Hours,
-		"date":          entry.Date.Format("2006-01-02"),
-		"org":           entry.Organization,
-		"last_modified": entry.LastModified.Format("2006-01-02"),
+func dbCodeEmail(email string) string {
+	return strings.Replace(email, ".", "^", -1)
+}
+
+func dbDecodeEmail(code string) string {
+	return strings.Replace(code, "^", ".", -1)
+}
+
+// Type Database maybe threadsafe?
+type Database struct {
+	app *firebase.App
+	db  *db.Client
+	ctx context.Context
+}
+
+func NewDatabase(configFile string, databaseURL string) (*Database, error) {
+	ctx := context.Background()
+	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsFile(configFile))
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to app: %v", err)
 	}
-	if entry.ContactName != "" {
-		out["contact_name"] = entry.ContactName
+	database, err := app.DatabaseWithURL(ctx, databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open database: %v", err)
 	}
-	if entry.ContactEmail != "" {
-		out["contact_email"] = entry.ContactEmail
+	return &Database{
+		app: app,
+		db:  database,
+		ctx: ctx,
+	}, nil
+}
+
+func (dab *Database) Get(email string, key string) (*Entry, error) {
+	entry := new(Entry)
+	err := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key).Get(dab.ctx, &entry)
+	if err != nil {
+		return nil, err
 	}
-	if entry.ContactPhone != 0 {
-		out["contact_phone"] = entry.ContactPhone
+	return entry, nil
+}
+
+func (dab *Database) Add(email string, entry *Entry) (string, error) {
+	ref, err := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Push(dab.ctx, entry)
+	if err != nil {
+		return "", err
 	}
-	if entry.Description != "" {
-		out["description"] = entry.Description
+	return path.Base(ref.Path), nil
+}
+
+func (dab *Database) Set(email string, key string, entry *Entry) error {
+	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
+	return ref.Set(dab.ctx, entry)
+}
+
+func (dab *Database) Flag(email string, key string, flag bool) error {
+	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
+	return ref.Update(dab.ctx, map[string]interface{}{
+		"flagged": flag,
+	})
+}
+
+func (dab *Database) Remove(email string, key string) error {
+	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
+	return ref.Delete(dab.ctx)
+}
+
+type EntryList []*Entry
+
+func (l EntryList) Total() uint {
+	total := uint(0)
+	for _, entry := range l {
+		total += entry.Hours
 	}
-	if entry.Flagged {
-		out["flagged"] = true
+	return total
+}
+
+func (dab *Database) List(email string) (EntryList, error) {
+	slice := make(EntryList, 0)
+	query := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).OrderByKey()
+	err := query.Get(dab.ctx, &slice)
+	if err != nil {
+		return nil, err
 	}
-	return json.Marshal(out)
+	return slice, nil
+}
+
+// Returns the path of the entries for grade `grade`
+func DBPath(grade uint) string {
+	return "./data/entries-" + strconv.FormatUint(uint64(grade), 10) + ".json"
+}
+
+// Represents an entry
+type DBEntry struct {
+	Name         string
+	Hours        uint
+	Date         time.Time
+	Organization string
+	ContactName  string
+	ContactEmail string
+	ContactPhone uint
+	Description  string
+	LastModified time.Time
+	Flagged      bool
 }
 
 // Returns whether the entry is at least 30 days old

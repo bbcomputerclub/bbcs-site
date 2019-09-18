@@ -1,3 +1,8 @@
+// TODO: 1) change indexes to keys (int => string)
+//       2) replace DB* with Database
+//
+//       3) create some type State struct { database, signinmap	 }
+
 package main
 
 import (
@@ -16,6 +21,27 @@ import (
 	"strings"
 	"time"
 )
+
+var (
+	DATABASE_URL       = os.Getenv("DATABASE_URL")
+	DATABASE_AUTH_FILE = "credentials.json" // $DATABASE_CREDENTIALS
+)
+
+var database *Database = nil
+
+func init() {
+	credentials := os.Getenv("DATABASE_CREDENTIALS")
+	file, err := os.Create(DATABASE_AUTH_FILE)
+	if err != nil {
+		panic(err)
+	}
+	err = io.WriteString(DATABASE_AUTH_FILE, credentials)
+	if err != nil {
+		panic(err)
+	}
+
+	database = NewDatabase(credentials, DATABASE_URL)
+}
 
 // Returns user and student
 func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, error) {
@@ -36,15 +62,16 @@ func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, er
 	}
 }
 
+// This shouldn't exist
 type FileHandler string
 type FileHandlerData struct {
-	Entry      *DBEntry // Current entry, or nil
-	EntryIndex int      // Index of entry
+	Entry    *Entry // Current entry, or nil
+	EntryKey string // Key of entry
 
 	User    UserData // Current logged-in user
 	Student UserData // Which student he is looking at
 
-	StudentEntries   map[uint]*DBEntry
+	StudentEntries   map[uint]*Entry
 	StudentEntriesId []uint
 
 	Students map[uint][]UserData
@@ -59,7 +86,7 @@ const (
 
 func (d FileHandlerData) Action() string {
 	switch {
-	case d.EntryIndex < 0:
+	case d.EntryKey == "":
 		return ACTION_ADD
 	case !d.Entry.Editable() && !d.User.Admin():
 		return ACTION_VIEW
@@ -134,8 +161,8 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		})
 	}
 
-	out.StudentEntries = make(map[uint]*DBEntry)
-	entrylist := DBList(out.Student.Email, out.Student.Grade)
+	out.StudentEntries = make(map[uint]*Entry)
+	entrylist := database.List(out.Student.Email)
 	for i, entry := range entrylist {
 		if entry != nil {
 			out.StudentEntries[uint(i)] = entry
@@ -156,9 +183,9 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
 	if err == nil {
 		if out.EntryIndex >= 0 {
-			out.Entry = DBGet(out.Student.Email, out.Student.Grade, out.EntryIndex)
+			out.Entry = database.Get(out.Student.Email, out.EntryIndex)
 		} else {
-			out.Entry = DBEntryFromQuery(query)
+			out.Entry = EntryFromQuery(query)
 		}
 	} else {
 		out.EntryIndex = -1
@@ -362,7 +389,7 @@ func main() {
 			return
 		}
 
-		newEntry := DBEntryFromQuery(query)
+		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is editable
 		if !user.CanEdit(DBGet(student.Email, student.Grade, index)) || !user.CanEdit(newEntry) {
