@@ -35,12 +35,16 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = io.WriteString(DATABASE_AUTH_FILE, credentials)
+	_, err = io.WriteString(file, credentials)
 	if err != nil {
 		panic(err)
 	}
+	file.Close()
 
-	database = NewDatabase(credentials, DATABASE_URL)
+	database, err = NewDatabase(DATABASE_AUTH_FILE, DATABASE_URL)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Returns user and student
@@ -62,7 +66,7 @@ func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, er
 	}
 }
 
-// This shouldn't exist
+// TODO: This shouldn't exist; different pages have different stuffs
 type FileHandler string
 type FileHandlerData struct {
 	Entry    *Entry // Current entry, or nil
@@ -71,8 +75,8 @@ type FileHandlerData struct {
 	User    UserData // Current logged-in user
 	Student UserData // Which student he is looking at
 
-	StudentEntries   map[uint]*Entry
-	StudentEntriesId []uint
+	StudentEntries   map[string]*Entry
+	StudentEntriesId []string
 
 	Students map[uint][]UserData
 	Grades   []uint
@@ -161,18 +165,7 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		})
 	}
 
-	out.StudentEntries = make(map[uint]*Entry)
-	entrylist := database.List(out.Student.Email)
-	for i, entry := range entrylist {
-		if entry != nil {
-			out.StudentEntries[uint(i)] = entry
-			out.StudentEntriesId = append(out.StudentEntriesId, uint(i))
-		}
-	}
-
-	sort.Slice(out.StudentEntriesId, func(i, j int) bool {
-		return out.StudentEntries[out.StudentEntriesId[i]].Date.After(out.StudentEntries[out.StudentEntriesId[j]].Date)
-	})
+	out.StudentEntriesId, out.StudentEntries, err = database.ListSorted(out.Student.Email)
 
 	for _, slice := range out.Students {
 		sort.Slice(slice, func(i, j int) bool {
@@ -180,15 +173,14 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 		})
 	}
 
-	out.EntryIndex, err = strconv.Atoi(query.Get("entry"))
-	if err == nil {
-		if out.EntryIndex >= 0 {
-			out.Entry = database.Get(out.Student.Email, out.EntryIndex)
-		} else {
-			out.Entry = EntryFromQuery(query)
+	out.EntryKey = query.Get("entry")
+	if out.EntryKey != "" {
+		out.Entry, err = database.Get(out.Student.Email, out.EntryKey)
+		if err != nil {
+			return nil, err
 		}
 	} else {
-		out.EntryIndex = -1
+		out.Entry = EntryFromQuery(query)
 	}
 
 	return out, nil
@@ -342,17 +334,11 @@ func main() {
 		}
 
 		// Get entry
-		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil {
-			w.WriteHeader(404)
-			return
-		}
+		key := query.Get("entry")
 
-		entry := DBGet(student.Email, student.Grade, index)
-		if entry == nil {
-			w.Header().Set("Content-Type", "text/plain")
-			w.WriteHeader(400)
-			io.WriteString(w, "Entry #"+r.URL.Query().Get("entry")+" does not exist")
+		entry, err := database.Get(student.Email, key)
+		if err != nil {
+			w.WriteHeader(500)
 			return
 		}
 
@@ -383,24 +369,24 @@ func main() {
 		}
 
 		// Get entry
-		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil {
-			w.WriteHeader(400)
-			return
-		}
+		key := query.Get("entry")
 
 		newEntry := EntryFromQuery(query)
+		oldEntry, err := database.Get(student.Email, key)
+		if err != nil {
+			oldEntry = nil
+		}
 
 		// Make sure entry is editable
-		if !user.CanEdit(DBGet(student.Email, student.Grade, index)) || !user.CanEdit(newEntry) {
+		if !user.Admin() && ((oldEntry != nil && !oldEntry.Editable()) || !newEntry.Editable()) {
 			w.WriteHeader(403)
 			return
 		}
 
-		newEntry.CalcFlagged()
+		newEntry.SetFlagged()
 
 		// Make changes
-		DBSet(student.Email, student.Grade, newEntry, index)
+		database.Set(student.Email, key, newEntry)
 
 		// Redirect
 		w.Header().Set("Location", "/list?user="+student.Email)
@@ -425,20 +411,21 @@ func main() {
 		}
 
 		// Get entry
-		index, err := strconv.Atoi(query.Get("entry"))
+		key := r.PostFormValue("entry")
+		entry, err := database.Get(student.Email, key)
 		if err != nil {
-			w.WriteHeader(400)
+			w.WriteHeader(500)
 			return
 		}
 
 		// Make sure existing entry is editable
-		if !user.CanEdit(DBGet(student.Email, student.Grade, index)) {
+		if !user.Admin() && !entry.Editable() {
 			w.WriteHeader(403)
 			return
 		}
 
 		// Make changes
-		DBRemove(student.Email, student.Grade, index)
+		database.Remove(student.Email, key)
 
 		// Redirect
 		w.Header().Set("Location", "/list?user="+student.Email)
@@ -463,16 +450,16 @@ func main() {
 		}
 
 		// Get entry
-		index, err := strconv.Atoi(query.Get("entry"))
-		if err != nil {
-			w.WriteHeader(400)
-			return
-		}
+		key := query.Get("entry")
 
 		// Make changes
-		entry := DBGet(student.Email, student.Grade, index)
+		entry, err := database.Get(student.Email, key)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
 		entry.Flagged = false
-		DBSet(student.Email, student.Grade, entry, index)
+		database.Set(student.Email, key, entry)
 
 		// Redirect
 		w.Header().Set("Location", "/flagged")

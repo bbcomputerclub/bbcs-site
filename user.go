@@ -42,6 +42,7 @@ func (u UserData) Admin() bool {
 	return false
 }
 
+/*
 // Returns the total number of hours that a user logged
 func (u UserData) Total() uint {
 	return DBTotal(u.Email, u.Grade)
@@ -56,7 +57,7 @@ func (u UserData) Entries() []*DBEntry {
 func (u UserData) CanEdit(entry *DBEntry) bool {
 	return u.Admin() || entry.Editable()
 }
-
+*/
 // Returns # of years they have been in school
 func (u UserData) Years() uint {
 	now := time.Now()

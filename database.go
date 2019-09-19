@@ -12,10 +12,9 @@ import (
 	"firebase.google.com/go/db"
 	"fmt"
 	"google.golang.org/api/option"
-	"io/ioutil"
 	"net/url"
-	"os"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -50,6 +49,29 @@ func EmptyEntry() *Entry {
 		Date:         time.Now(),
 		LastModified: time.Now(),
 	}
+}
+
+func (entry *Entry) SetFlagged() {
+	entry.Flagged = false
+	if entry.Hours >= 10 {
+		entry.Flagged = true
+		return
+	}
+	keywords := []string{"cit", "counselor", "camp"}
+	for _, keyword := range keywords {
+		if strings.Contains(strings.ToLower(entry.Name), keyword) ||
+			strings.Contains(strings.ToLower(entry.Description), keyword) ||
+			strings.Contains(strings.ToLower(entry.Organization), keyword) {
+			entry.Flagged = true
+			return
+		}
+	}
+}
+
+// Returns whether the entry is at least 30 days old
+func (entry *Entry) Editable() bool {
+	duration, _ := time.ParseDuration("1h")
+	return time.Since(entry.Date) <= duration*24*30
 }
 
 func (entry *Entry) MarshalJSON() ([]byte, error) {
@@ -182,7 +204,7 @@ func (dab *Database) Remove(email string, key string) error {
 	return ref.Delete(dab.ctx)
 }
 
-type EntryList []*Entry
+type EntryList map[string]*Entry
 
 func (l EntryList) Total() uint {
 	total := uint(0)
@@ -193,15 +215,80 @@ func (l EntryList) Total() uint {
 }
 
 func (dab *Database) List(email string) (EntryList, error) {
-	slice := make(EntryList, 0)
+	list := make(EntryList)
 	query := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).OrderByKey()
-	err := query.Get(dab.ctx, &slice)
+	err := query.Get(dab.ctx, &list)
 	if err != nil {
 		return nil, err
 	}
-	return slice, nil
+	return list, nil
 }
 
+func (dab *Database) ListSorted(email string) ([]string, EntryList, error) {
+	list, err := dab.List(email)
+	if err != nil {
+		return nil, nil, err
+	}
+	keylist := []string(nil)
+	for key, _ := range list {
+		keylist = append(keylist, key)
+	}
+
+	sort.Slice(keylist, func(i, j int) bool {
+		return list[keylist[i]].Date.After(list[keylist[j]].Date)
+	})
+
+	return keylist, list, nil
+}
+
+// deprecated
+func EntryFromQuery(query url.Values) *Entry {
+	hours, err := strconv.ParseUint(query.Get("hours"), 10, 64)
+	if err != nil {
+		hours = 1
+	}
+	date, err := time.Parse("2006-01-02", query.Get("date"))
+	if err != nil {
+		date = time.Now()
+	}
+
+	contactPhone, err := strconv.ParseUint(strings.NewReplacer("-", "", "+", "", " ", "").Replace(query.Get("contactphone")), 10, 64)
+	if err != nil {
+		contactPhone = 0
+	}
+
+	return &Entry{
+		Name:         query.Get("name"),
+		Hours:        uint(hours),
+		Date:         date,
+		Organization: query.Get("org"),
+		ContactName:  query.Get("contactname"),
+		ContactEmail: query.Get("contactemail"),
+		Description:  query.Get("description"),
+		ContactPhone: uint(contactPhone),
+		LastModified: time.Now(),
+	}
+}
+
+func (entry *Entry) EncodeQuery() url.Values {
+	out := url.Values{}
+	out.Set("name", entry.Name)
+	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
+	out.Set("date", entry.Date.Format("2006-01-02"))
+	out.Set("org", entry.Organization)
+	if entry.ContactName != "" {
+		out.Set("contactname", entry.ContactName)
+	}
+	if entry.ContactEmail != "" {
+		out.Set("contactemail", entry.ContactEmail)
+	}
+	if entry.ContactPhone != 0 {
+		out.Set("contactphone", strconv.FormatUint(uint64(entry.ContactPhone), 10))
+	}
+	return out
+}
+
+/*
 // Returns the path of the entries for grade `grade`
 func DBPath(grade uint) string {
 	return "./data/entries-" + strconv.FormatUint(uint64(grade), 10) + ".json"
@@ -248,7 +335,6 @@ func (entry *DBEntry) CalcFlagged() {
 // Represents a document that contains all entries
 type DBDocument map[string][]*DBEntry
 
-/* Returns data.json or an empty document if data.jsond doesn't exist */
 func DBDocumentGet(grade uint) DBDocument {
 	body, err := ioutil.ReadFile(DBPath(grade))
 
@@ -278,7 +364,6 @@ func DBDocumentWrite(grade uint, doc DBDocument) error {
 	return err
 }
 
-/* Adds / changes an entry */
 func DBSet(email string, grade uint, entry *DBEntry, index int) {
 	doc := DBDocumentGet(grade)
 
@@ -291,7 +376,6 @@ func DBSet(email string, grade uint, entry *DBEntry, index int) {
 	DBDocumentWrite(grade, doc)
 }
 
-/* Lists the entries */
 func DBList(email string, grade uint) []*DBEntry {
 	doc := DBDocumentGet(grade)
 	if len(doc[email]) != 0 {
@@ -311,7 +395,6 @@ func DBList(email string, grade uint) []*DBEntry {
 	return nil
 }
 
-/* The default entry. */
 func DBEntryDefault() *DBEntry {
 	return &DBEntry{
 		Date:  time.Now(),
@@ -319,7 +402,6 @@ func DBEntryDefault() *DBEntry {
 	}
 }
 
-/* Retrieves an entry. If not found, returns the default entry */
 func DBGet(email string, grade uint, index int) *DBEntry {
 	doc := DBDocumentGet(grade)
 
@@ -330,7 +412,7 @@ func DBGet(email string, grade uint, index int) *DBEntry {
 	return DBEntryDefault()
 }
 
-/* Returns the total # of hours */
+/* Returns the total # of hours
 func DBTotal(email string, grade uint) uint {
 	list := DBList(email, grade)
 
@@ -343,7 +425,7 @@ func DBTotal(email string, grade uint) uint {
 	return total
 }
 
-/* Removes an entry */
+/* Removes an entry
 func DBRemove(email string, grade uint, index int) {
 	DBSet(email, grade, nil, index)
 }
@@ -394,3 +476,4 @@ func DBEntryFromQuery(query url.Values) *DBEntry {
 		LastModified: time.Now(),
 	}
 }
+*/
