@@ -85,7 +85,7 @@ func getToken(r *http.Request) string {
 // the user does not have sufficient permissions, an empty string is passed as the first argument.
 //
 // The 2nd argument is the signed-in user, and the 3rd argument is the original request.
-type ActionHandler func(student string, user UserData, r *http.Request) (uint16, string)
+type ActionHandler func(student string, user UserData, query url.Values) (uint16, string)
 
 func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -105,7 +105,7 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		email = r.PostFormValue("user")
 	}
 
-	status, loc := f(email, user, r)
+	status, loc := f(email, user, r.PostForm)
 	if status >= 300 && status < 400 && loc != "" {
 		w.Header().Set("Location", loc)
 	}
@@ -222,15 +222,15 @@ func main() {
 	})
 
 	// Updates an entry
-	r.Handle("/do/update", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+	r.Handle("/do/update", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
 
 		// Get entry
-		key := r.PostFormValue("entry")
+		key := query.Get("entry")
 		oldEntry, _ := database.Get(email, key)
-		newEntry := EntryFromQuery(r.PostForm)
+		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is recent
 		if (!user.Admin()) && (!oldEntry.Editable() || !newEntry.Editable()) {
@@ -245,12 +245,12 @@ func main() {
 	}))
 
 	// Adds an entry
-	r.Handle("/do/add", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+	r.Handle("/do/add", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
 
-		newEntry := EntryFromQuery(r.PostForm)
+		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is recent
 		if !user.Admin() && !newEntry.Editable() {
@@ -265,13 +265,13 @@ func main() {
 	}))
 
 	// Removes an entry
-	r.Handle("/do/delete", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+	r.Handle("/do/delete", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
 
 		// Get entry
-		key := r.PostFormValue("entry")
+		key := query.Get("entry")
 		entry, err := database.Get(email, key)
 		if err != nil {
 			return 403, ""
@@ -290,18 +290,13 @@ func main() {
 	}))
 
 	// Marks an entry as not suspicious
-	r.Handle("/do/unflag", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+	r.Handle("/do/unflag", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
 		if !user.Admin() || email == "" {
 			return 403, ""
 		}
 
-		// Get entry
-		key := r.PostFormValue("entry")
-
-		// Make changes
+		key := query.Get("entry")
 		database.Flag(email, key, false)
-
-		// Redirect
 		return 303, "/all/flagged"
 	}))
 
