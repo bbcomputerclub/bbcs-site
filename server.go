@@ -264,6 +264,17 @@ func main() {
 		w.WriteHeader(303)
 	})
 
+	// Redirects to /{email}/add
+	r.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
+			w.WriteHeader(403)
+			return
+		}
+		w.Header().Set("Location", "/"+user.Email+"/add?"+r.URL.RawQuery)
+		w.WriteHeader(303)
+	})
+
 	// Updates an entry
 	r.Handle("/do/update", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
 		if email == "" {
