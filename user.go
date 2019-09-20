@@ -17,7 +17,7 @@ type UserData struct {
 	Grade uint   `json:"grade"` // Graduation Year
 	Email string `json:"email"` // Email
 	Late  uint   `json:"late"`  // Years Late
-	Admin bool
+	Admin bool   `json:"admin"`
 }
 
 // Returns # of years they have been in school
