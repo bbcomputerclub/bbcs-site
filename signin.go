@@ -32,8 +32,8 @@ func (m *TokenMap) newToken() string {
 	return token
 }
 
-func (m *TokenMap) AddGToken(gtoken string) (string, UserData, error) {
-	user, err := tmUserFromGToken(gtoken)
+func (m *TokenMap) AddGToken(gtoken string, database *Database) (string, UserData, error) {
+	user, err := tmUserFromGToken(gtoken, database)
 	if err != nil {
 		return "", UserData{}, err
 	}
@@ -61,7 +61,7 @@ func (m *TokenMap) Get(token string) (UserData, bool) {
 	return user, ok
 }
 
-func tmUserFromGToken(token string) (UserData, error) {
+func tmUserFromGToken(token string, database *Database) (UserData, error) {
 	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
 	if err != nil {
@@ -85,11 +85,10 @@ func tmUserFromGToken(token string) (UserData, error) {
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
 		return UserData{}, errors.New("that account isn't associated with Blind Brook")
 	}
-
-	out, ok := StudentList[fmt.Sprint(data["email"])]
+	out := database.User(fmt.Sprint(data["email"]))
 
 	// Create UserData struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
-	if !ok {
+	if out.Name == out.Email || out.Name == "" {
 		out.Email = fmt.Sprint(data["email"])
 		out.Name = fmt.Sprint(data["name"])
 	}

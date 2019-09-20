@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-	{{if .User.Admin}}
 	<head>
 		<title>Admin Dashboard</title>
 		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
@@ -87,10 +86,10 @@ h3 {
 					{{range index $global.Students $grade}}
 						<li><a href="/{{.Email}}">{{.Name}}
 						<span style="float:right">
-						{{if lt .Total .Required}}
+						{{if lt (index $global.Totals .Email) .Required}}
 						<span class="material-icons" style="vertical-align:middle">&#xe002;</span>
 						{{end}}
-						<span style="vertical-align:middle">{{.Total}}</span>
+						<span style="vertical-align:middle">{{index $global.Totals .Email}}</span>
 						</span></a></li>
 					{{end}}
 				</ul>
@@ -98,10 +97,4 @@ h3 {
 			{{end}}
 		</div>
    </body>
-   {{else}}
-   	<head>
-   		<title>Redirect</title>
-   		<meta http-equiv="refresh" content="0;url=/list">
-   	</head>
-   {{end}}
 </html>

@@ -102,7 +102,7 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email := ""
-	if user.Admin() || r.PostFormValue("user") == user.Email {
+	if user.Admin || r.PostFormValue("user") == user.Email {
 		email = r.PostFormValue("user")
 	}
 
@@ -131,7 +131,7 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	email := ""
-	if user.Admin() || user.Email == vars["email"] {
+	if user.Admin || user.Email == vars["email"] {
 		email = vars["email"]
 	}
 
@@ -232,7 +232,7 @@ func main() {
 	r.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
-		token, user, err := tokenMap.AddGToken(query.Get("token"))
+		token, user, err := tokenMap.AddGToken(query.Get("token"), database)
 		if err != nil {
 			w.Header().Set("Refresh", "0; url=/#error:"+url.QueryEscape(err.Error()))
 			w.WriteHeader(403)
@@ -243,7 +243,7 @@ func main() {
 
 		redirect, err := url.QueryUnescape(query.Get("redirect"))
 		if len(redirect) == 0 || err != nil {
-			if user.Admin() {
+			if user.Admin {
 				w.Header().Set("Location", "/all")
 			} else {
 				w.Header().Set("Location", "/"+user.Email)
@@ -287,7 +287,7 @@ func main() {
 		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is recent
-		if (!user.Admin()) && (!oldEntry.Editable() || !newEntry.Editable()) {
+		if (!user.Admin) && (!oldEntry.Editable() || !newEntry.Editable()) {
 			return 403, ""
 		}
 
@@ -307,7 +307,7 @@ func main() {
 		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is recent
-		if !user.Admin() && !newEntry.Editable() {
+		if !user.Admin && !newEntry.Editable() {
 			return 403, ""
 		}
 		newEntry.SetFlagged()
@@ -332,7 +332,7 @@ func main() {
 		}
 
 		// Make sure existing entry is editable
-		if !user.Admin() && !entry.Editable() {
+		if !user.Admin && !entry.Editable() {
 			return 403, ""
 		}
 
@@ -345,7 +345,7 @@ func main() {
 
 	// Marks an entry as not suspicious
 	r.Handle("/do/unflag", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
-		if !user.Admin() || email == "" {
+		if !user.Admin || email == "" {
 			return 403, ""
 		}
 
@@ -354,13 +354,40 @@ func main() {
 		return 303, "/all/flagged"
 	}))
 
-	r.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+	r.Handle("/all", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		if !user.Admin {
+			return 403, "", nil
+		}
 
-	})
+		users, err := database.Users()
+		if err != nil {
+			return 500, "", nil
+		}
 
-	r.HandleFunc("/all/flagged", func(w http.ResponseWriter, r *http.Request) {
+		totals := make(map[string]uint)
+		grades := make([]uint, 0, len(users))
+		for grade, users := range users {
+			grades = append(grades, grade)
+			for _, student := range users {
+				entries, err := database.List(student.Email)
+				if err != nil {
+					continue
+				}
+				totals[student.Email] = entries.Total()
+			}
+		}
 
-	})
+		return 200, "files/admin.html", map[string]interface{}{
+			"User":     user,
+			"Students": users,
+			"Grades":   grades,
+			"Totals":   totals,
+		}
+	}))
+
+	r.Handle("/all/flagged", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		return 500, "", nil
+	}))
 
 	r.Handle("/{email}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		keys, entries, err := database.ListSorted(email)
@@ -398,7 +425,7 @@ func main() {
 		switch {
 		case key == "add":
 			action = ACTION_ADD
-		case entry.Editable() || user.Admin():
+		case entry.Editable() || user.Admin:
 			action = ACTION_EDIT
 		default:
 			action = ACTION_VIEW
@@ -422,7 +449,7 @@ func main() {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		email := vars["email"]
-		if !user.Admin() && email != user.Email {
+		if !user.Admin && email != user.Email {
 			w.WriteHeader(403)
 			return
 		}
@@ -444,12 +471,6 @@ func main() {
 	}
 
 	fmt.Printf("http://localhost:%s/\n", port)
-
-	if err := StudentListInit(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-		return
-	}
 
 	err := http.ListenAndServe(":"+port, r)
 	fmt.Fprintln(os.Stderr, err)

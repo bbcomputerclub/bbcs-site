@@ -126,6 +126,23 @@ func (dab *Database) ListSorted(email string) ([]string, EntryList, error) {
 // Method User returns a user.
 func (dab *Database) User(email string) UserData {
 	user := UserData{Email: email, Name: email}
-	dab.db.NewRef("/students").Child(dbCodeEmail(email)).Get(dab.ctx, &user)
+	dab.db.NewRef("/users").Child(dbCodeEmail(email)).Get(dab.ctx, &user)
 	return user
+}
+
+// Method User returns a list of users, sorted by grade (0 = no grade).
+func (dab *Database) Users() (map[uint][]UserData, error) {
+	m := make(map[string]UserData)
+	query := dab.db.NewRef("/users").OrderByKey()
+	err := query.Get(dab.ctx, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make(map[uint][]UserData)
+	for _, user := range m {
+		list[user.Grade] = append(list[user.Grade], user)
+	}
+
+	return list, nil
 }

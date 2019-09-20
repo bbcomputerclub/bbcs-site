@@ -8,9 +8,6 @@ cd bbcs-site
 go build *.go
 ```
 
-## `data/` directory
-The data directory contains files that contain information about the students and their hours.
+## Environment variables
+See [`server.go`](server.go) for documentation.
 
-* `students.csv` (required) - a csv file. `Name,GradYear,Email,Late`
-* `entries-XXXX.json` (where XXXX is the graduation year) - the entries for that grade
-* `admins.txt` - a list of admins' emails

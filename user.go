@@ -2,12 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -16,29 +10,14 @@ const (
 	AdminListPath   = "./data/admins.txt"
 )
 
-type UserData struct {
-	Name  string // Name
-	Grade uint   // Graduation Year
-	Email string // Email
-	Late  uint   // Years Late
-	//	Admin bool
-}
+var _ = csv.NewReader
 
-// TODO: Get rid of this
-// Get whether the user is an admin.
-// The list of admins is located at data/admins.txt.
-func (u UserData) Admin() bool {
-	// Is the email in admins list?
-	if adminsData, err := ioutil.ReadFile(AdminListPath); err == nil {
-		for _, line := range strings.Split(string(adminsData), "\n") {
-			if u.Email == line {
-				return true
-			}
-		}
-	} else {
-		fmt.Fprintf(os.Stderr, "Error reading admins list: %s\n", err.Error())
-	}
-	return false
+type UserData struct {
+	Name  string `json:"name"`  // Name
+	Grade uint   `json:"grade"` // Graduation Year
+	Email string `json:"email"` // Email
+	Late  uint   `json:"late"`  // Years Late
+	Admin bool
 }
 
 /*
@@ -87,17 +66,7 @@ func (u UserData) Required() uint {
 	return u.Years() * 20
 }
 
-// TODO: THis should _probably_ go in Database
-// Creates a user from an email
-func UserFromEmail(email string) UserData {
-	data, ok := StudentList[email]
-	if ok {
-		return data
-	} else {
-		return UserData{Email: email, Name: email, Grade: 0}
-	}
-}
-
+/*
 // students.csv code below
 // students.csv has the format Name, Grade / Graduation Year, Email
 
@@ -148,3 +117,4 @@ func StudentListInit() error {
 
 	return nil
 }
+*/
