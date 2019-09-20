@@ -383,6 +383,17 @@ func main() {
 
 		key := vars["key"]
 
+		var entry *Entry
+		if key == "add" {
+			entry = EntryFromQuery(query)
+		} else {
+			var err error
+			entry, err = database.Get(email, key)
+			if err != nil {
+				return 404, "", nil
+			}
+		}
+
 		action := ""
 		switch {
 		case key == "add":
@@ -391,17 +402,6 @@ func main() {
 			action = ACTION_EDIT
 		default:
 			action = ACTION_VIEW
-		}
-
-		var entry *Entry
-		if action == ACTION_ADD {
-			entry = EntryFromQuery(query)
-		} else {
-			var err error
-			entry, err = database.Get(email, key)
-			if err != nil {
-				return 404, "", nil
-			}
 		}
 
 		return 200, "files/edit.html", map[string]interface{}{
@@ -414,7 +414,28 @@ func main() {
 	}))
 
 	r.HandleFunc("/{email}/{key}/duplicate", func(w http.ResponseWriter, r *http.Request) {
-		// TODO
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
+			w.WriteHeader(403)
+			return
+		}
+		vars := mux.Vars(r)
+		key := vars["key"]
+		email := vars["email"]
+		if !user.Admin() && email != user.Email {
+			w.WriteHeader(403)
+			return
+		}
+
+		entry, err := database.Get(email, key)
+		if err != nil {
+			w.WriteHeader(404)
+			return
+		}
+		entry.Date = time.Now()
+
+		w.Header().Set("Location", "/add?"+entry.EncodeQuery().Encode())
+		w.WriteHeader(303)
 	})
 
 	port := os.Getenv("PORT")
