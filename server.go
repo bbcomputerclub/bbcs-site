@@ -27,7 +27,10 @@ var (
 	DATABASE_AUTH_FILE = "credentials.json" // $DATABASE_CREDENTIALS
 )
 
-var database *Database = nil
+var (
+	database *Database = nil
+	tokenMap *TokenMap = NewTokenMap()
+)
 
 func init() {
 	credentials := os.Getenv("DATABASE_CREDENTIALS")
@@ -51,12 +54,12 @@ func init() {
 func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, error) {
 	sidc, err := r.Cookie("BBCS_SESSION_ID")
 	if err != nil {
-		return UserData{}, UserData{}, errors.New("Not signed in: " + err.Error())
+		return UserData{}, UserData{}, errors.New("not signed in: " + err.Error())
 	}
 
-	user, err := SignedUser(sidc.Value)
-	if err != nil {
-		return UserData{}, UserData{}, errors.New("Can't sign in: " + err.Error())
+	user, ok := tokenMap.Get(sidc.Value)
+	if !ok {
+		return UserData{}, UserData{}, errors.New("can't sign in: token invalid")
 	}
 
 	if user.Admin() && len(query.Get("user")) != 0 {
@@ -282,7 +285,7 @@ func main() {
 			return
 		}
 
-		sid := Signin(user)
+		sid := tokenMap.Add(user)
 		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Value: sid, HttpOnly: true})
 
 		redirect := r.URL.Query().Get("redirect")
@@ -306,7 +309,7 @@ func main() {
 			return
 		}
 		sid := sidC.Value
-		Signout(sid)
+		tokenMap.Remove(sid)
 
 		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Value: "", MaxAge: -1})
 		w.Header().Set("Location", "/#signout")

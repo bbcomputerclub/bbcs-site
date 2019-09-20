@@ -1,41 +1,49 @@
 package main
 
 import (
-	"errors"
 	"math/rand"
 	"strconv"
+	"sync"
 )
 
-// Maps session IDs to users
-var SigninMap = make(map[string]UserData)
+type TokenMap struct {
+	m     map[string]UserData
+	mutex *sync.RWMutex
+}
 
-// Generates a session ID
-func SigninGen() string {
-	out := strconv.FormatInt(rand.Int63(), 36)
-	if _, ok := SigninMap[out]; ok { // if seesion id already is a thing
-		return SigninGen() // try again
+func NewTokenMap() *TokenMap {
+	return &TokenMap{
+		m:     make(map[string]UserData),
+		mutex: new(sync.RWMutex),
 	}
-	return out
 }
 
-// Signs in a user and returns the session ID
-func Signin(user UserData) string {
-	sid := SigninGen()
-	SigninMap[sid] = user
-	return sid
-}
-
-// Signs out a user
-func Signout(sid string) {
-	delete(SigninMap, sid)
-}
-
-// Returns user associated with sid
-func SignedUser(sid string) (UserData, error) {
-	user, ok := SigninMap[sid]
-	if ok && len(user.Email) != 0 {
-		return user, nil
-	} else {
-		return UserData{}, errors.New("Invalid session ID")
+// Doesn't lock
+func (m *TokenMap) newToken() string {
+	token := strconv.FormatInt(rand.Int63(), 36)
+	if _, ok := m.m[token]; ok {
+		return m.newToken()
 	}
+	return token
+}
+
+func (m *TokenMap) Add(user UserData) string {
+	m.mutex.Lock()
+	token := m.newToken()
+	m.m[token] = user
+	m.mutex.Unlock()
+	return token
+}
+
+func (m *TokenMap) Remove(token string) {
+	m.mutex.Lock()
+	delete(m.m, token)
+	m.mutex.Unlock()
+}
+
+func (m *TokenMap) Get(token string) (UserData, bool) {
+	m.mutex.RLock()
+	user, ok := m.m[token]
+	m.mutex.RUnlock()
+	return user, ok
 }
