@@ -25,10 +25,6 @@ var (
 	DATABASE_AUTH_FILE = "credentials.json" // $DATABASE_CREDENTIALS
 )
 
-// struct State
-//
-// func (State) Users(request)
-
 var (
 	database *Database = nil
 	tokenMap *TokenMap = NewTokenMap()
@@ -81,6 +77,39 @@ func getToken(r *http.Request) string {
 		return cookie.Value
 	}
 	return ""
+}
+
+// A handler.
+//
+// Passes the student's email as the first argument. If the user is not authenticated or
+// the user does not have sufficient permissions, an empty string is passed as the first argument.
+//
+// The 2nd argument is the signed-in user, and the 3rd argument is the original request.
+type ActionHandler func(student string, user UserData, r *http.Request) (uint16, string)
+
+func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.Header().Set("Allow", "POST, PUT")
+		w.WriteHeader(405)
+		return
+	}
+
+	user, ok := tokenMap.Get(getToken(r))
+	if !ok {
+		w.Header().Set("Refresh", "0;url=/")
+		w.WriteHeader(401)
+		return
+	}
+	email := ""
+	if user.Admin() || r.PostFormValue("user") == user.Email {
+		email = r.PostFormValue("user")
+	}
+
+	status, loc := f(email, user, r)
+	if status >= 300 && status < 400 && loc != "" {
+		w.Header().Set("Location", loc)
+	}
+	w.WriteHeader(int(status))
 }
 
 func main() {
@@ -193,25 +222,9 @@ func main() {
 	})
 
 	// Updates an entry
-	r.HandleFunc("/do/update", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" && r.Method != "PUT" {
-			w.Header().Set("Allow", "POST, PUT")
-			io.WriteString(w, "invalid request")
-			w.WriteHeader(405)
-			return
-		}
-
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok {
-			w.WriteHeader(403)
-			io.WriteString(w, "invalid token")
-			return
-		}
-		email := r.PostFormValue("user")
-		if !user.Admin() && user.Email != email {
-			w.WriteHeader(403)
-			io.WriteString(w, "not enough permissions")
-			return
+	r.Handle("/do/update", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+		if email == "" {
+			return 403, ""
 		}
 
 		// Get entry
@@ -219,127 +232,78 @@ func main() {
 		oldEntry, _ := database.Get(email, key)
 		newEntry := EntryFromQuery(r.PostForm)
 
-		// Make sure entry is editable
+		// Make sure entry is recent
 		if (!user.Admin()) && (!oldEntry.Editable() || !newEntry.Editable()) {
-			w.WriteHeader(403)
-			io.WriteString(w, "not enough permissions")
-			return
+			return 403, ""
 		}
+
 		newEntry.SetFlagged()
 
-		// Make changes
 		database.Set(email, key, newEntry)
 
-		// Redirect
-		w.Header().Set("Location", "/"+email)
-		w.WriteHeader(302)
-	})
+		return 303, "/" + email
+	}))
 
 	// Adds an entry
-	r.HandleFunc("/do/add", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" && r.Method != "PUT" {
-			w.Header().Set("Allow", "POST, PUT")
-			io.WriteString(w, "invalid request")
-			w.WriteHeader(405)
-			return
+	r.Handle("/do/add", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+		if email == "" {
+			return 403, ""
 		}
 
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok {
-			w.WriteHeader(403)
-			io.WriteString(w, "invalid token")
-			return
-		}
-		email := r.PostFormValue("user")
-
-		if !user.Admin() && email != user.Email {
-			w.WriteHeader(403)
-			io.WriteString(w, "not enough permissions")
-			return
-		}
-
-		// Get entry
 		newEntry := EntryFromQuery(r.PostForm)
 
-		// Make sure entry is editable
+		// Make sure entry is recent
 		if !user.Admin() && !newEntry.Editable() {
-			w.WriteHeader(403)
-			io.WriteString(w, "not enough permissions")
-			return
+			return 403, ""
 		}
 		newEntry.SetFlagged()
 
-		// Make changes
 		database.Add(email, newEntry)
 
 		// Redirect
-		w.Header().Set("Location", "/"+email)
-		w.WriteHeader(302)
-	})
+		return 303, "/" + email
+	}))
 
 	// Removes an entry
-	r.HandleFunc("/do/delete", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" && r.Method != "DELETE" {
-			w.Header().Set("Allow", "POST, DELETE")
-			w.WriteHeader(405)
-			return
+	r.Handle("/do/delete", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+		if email == "" {
+			return 403, ""
 		}
-
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok {
-			w.WriteHeader(403)
-			io.WriteString(w, "invalid token")
-			return
-		}
-		email := r.PostFormValue("user")
 
 		// Get entry
 		key := r.PostFormValue("entry")
 		entry, err := database.Get(email, key)
 		if err != nil {
-			w.WriteHeader(500)
-			return
+			return 403, ""
 		}
 
 		// Make sure existing entry is editable
 		if !user.Admin() && !entry.Editable() {
-			w.WriteHeader(403)
-			return
+			return 403, ""
 		}
 
 		// Make changes
 		database.Remove(email, key)
 
 		// Redirect
-		w.Header().Set("Location", "/list?user="+email)
-		w.WriteHeader(302)
-	})
+		return 303, "/" + email
+	}))
 
 	// Marks an entry as not suspicious
-	r.HandleFunc("/do/unflag", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" && r.Method != "PU	T" {
-			w.Header().Set("Allow", "POST, PUT")
-			w.WriteHeader(405)
-			return
+	r.Handle("/do/unflag", ActionHandler(func(email string, user UserData, r *http.Request) (uint16, string) {
+		if !user.Admin() || email == "" {
+			return 403, ""
 		}
-
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok || !user.Admin() {
-			w.WriteHeader(403)
-			return
-		}
-		student := database.User(r.PostFormValue("user"))
 
 		// Get entry
 		key := r.PostFormValue("entry")
 
 		// Make changes
-		database.Flag(student.Email, key, false)
+		database.Flag(email, key, false)
 
 		// Redirect
-		w.Header().Set("Location", "/flagged")
-		w.WriteHeader(302)
-	})
+		return 303, "/all/flagged"
+	}))
 
 	r.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
 
