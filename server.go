@@ -1,8 +1,3 @@
-// TODO: 1) change indexes to keys (int => string)
-//       2) replace DB* with Database
-//
-//       3) create some type State struct { database, signinmap	 }
-
 package main
 
 import (
