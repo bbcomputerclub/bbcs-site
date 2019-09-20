@@ -25,6 +25,10 @@ var (
 	DATABASE_AUTH_FILE = "credentials.json" // $DATABASE_CREDENTIALS
 )
 
+// struct State
+//
+// func (State) Users(request)
+
 var (
 	database *Database = nil
 	tokenMap *TokenMap = NewTokenMap()
@@ -203,8 +207,8 @@ func main() {
 			io.WriteString(w, "invalid token")
 			return
 		}
-		student := database.User(r.PostFormValue("user"))
-		if !user.Admin() && student.Email != user.Email {
+		email := r.PostFormValue("user")
+		if !user.Admin() && user.Email != email {
 			w.WriteHeader(403)
 			io.WriteString(w, "not enough permissions")
 			return
@@ -212,7 +216,7 @@ func main() {
 
 		// Get entry
 		key := r.PostFormValue("entry")
-		oldEntry, _ := database.Get(student.Email, key)
+		oldEntry, _ := database.Get(email, key)
 		newEntry := EntryFromQuery(r.PostForm)
 
 		// Make sure entry is editable
@@ -224,10 +228,10 @@ func main() {
 		newEntry.SetFlagged()
 
 		// Make changes
-		database.Set(student.Email, key, newEntry)
+		database.Set(email, key, newEntry)
 
 		// Redirect
-		w.Header().Set("Location", "/"+student.Email)
+		w.Header().Set("Location", "/"+email)
 		w.WriteHeader(302)
 	})
 
@@ -246,8 +250,9 @@ func main() {
 			io.WriteString(w, "invalid token")
 			return
 		}
-		student := database.User(r.PostFormValue("user"))
-		if !user.Admin() && student.Email != user.Email {
+		email := r.PostFormValue("user")
+
+		if !user.Admin() && email != user.Email {
 			w.WriteHeader(403)
 			io.WriteString(w, "not enough permissions")
 			return
@@ -265,10 +270,10 @@ func main() {
 		newEntry.SetFlagged()
 
 		// Make changes
-		database.Add(student.Email, newEntry)
+		database.Add(email, newEntry)
 
 		// Redirect
-		w.Header().Set("Location", "/"+student.Email)
+		w.Header().Set("Location", "/"+email)
 		w.WriteHeader(302)
 	})
 
@@ -283,13 +288,14 @@ func main() {
 		user, ok := tokenMap.Get(getToken(r))
 		if !ok {
 			w.WriteHeader(403)
+			io.WriteString(w, "invalid token")
 			return
 		}
-		student := database.User(r.PostFormValue("user"))
+		email := r.PostFormValue("user")
 
 		// Get entry
 		key := r.PostFormValue("entry")
-		entry, err := database.Get(student.Email, key)
+		entry, err := database.Get(email, key)
 		if err != nil {
 			w.WriteHeader(500)
 			return
@@ -302,10 +308,10 @@ func main() {
 		}
 
 		// Make changes
-		database.Remove(student.Email, key)
+		database.Remove(email, key)
 
 		// Redirect
-		w.Header().Set("Location", "/list?user="+student.Email)
+		w.Header().Set("Location", "/list?user="+email)
 		w.WriteHeader(302)
 	})
 
