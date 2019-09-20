@@ -28,7 +28,7 @@
 	</head>
 	<body>
 		<div class="title with-icon">
-			<a href="/admin" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
+			<a href="/all" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
 			<h1 style="flex-grow:1">Suspicious Entries</h1>
 			<span>{{.User.Email}}</span>
 			<a href="/signout" class="button light">Sign out</a>		
@@ -40,7 +40,7 @@
 			{{- range $student := $students}}
 				{{- range $id, $entry := $student.Entries}}
 					{{- if $entry}}{{if $entry.Flagged}}
-						<li><a href="/edit?entry={{$id}}&user={{$student.Email}}">
+						<li><a href="/{{$student.Email}}/{{$id}}">
 							{{$entry.Name}}
 							<div style="float:right">
 								<span style="margin-right:48px">{{$student.Name}}</span>

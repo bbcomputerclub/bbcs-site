@@ -64,9 +64,9 @@
 				<a href="/{{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
 				<h1 style="flex-grow:1">{{.Action}} entry</h1>
 				<span>{{.User.Email}}</span>
-				<a href="/signout" class="button light">Sign out</a>		
+				<a href="/signout" class="button light">Sign out</a>
 			</div>
-			<div class="title-spacer"></div>		
+			<div class="title-spacer"></div>
 			<main>
 				<input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}>
 				<div class="flex flex-sm">
@@ -97,13 +97,13 @@
 								<button formaction="/do/unflag" class="button" type="submit" style="margin-right:8px">Not Suspicious</button>
 							{{end}}
 							<button formaction="/do/delete" class="button" type="submit" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
-							<a class="button" href="/duplicate?entry={{.Key}}&user={{.Student.Email}}" style="margin-left:8px">Duplicate</a>
+							<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-left:8px">Duplicate</a>
 						{{end}}
 						<a class="button" style="margin-left:8px" href="/{{.Student.Email}}">Cancel</a> 
 					</span>
 				{{else}}
 					<a class="button strong" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
-					<a class="button" href="/duplicate?entry={{.Key}}&user={{.Student.Email}}" style="margin-top:8px;float:right">Duplicate</a>
+					<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-top:8px;float:right">Duplicate</a>
 				{{end}}
 			</main>
 			{{if ne .Action "View"}}
