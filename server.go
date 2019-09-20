@@ -124,7 +124,7 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := tokenMap.Get(getToken(r))
 	if !ok {
-		w.Header().Set("Refresh", "0;url=/")
+		w.Header().Set("Refresh", "0;url=/?"+r.URL.Path)
 		w.WriteHeader(401)
 		return
 	}
