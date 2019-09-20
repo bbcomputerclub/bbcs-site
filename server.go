@@ -383,17 +383,6 @@ func main() {
 
 		key := vars["key"]
 
-		var entry *Entry
-		if key == "add" {
-			entry = EntryFromQuery(query)
-		} else {
-			var err error
-			entry, err = database.Get(email, key)
-			if err != nil {
-				return 404, "", nil
-			}
-		}
-
 		action := ""
 		switch {
 		case key == "add":
@@ -402,6 +391,17 @@ func main() {
 			action = ACTION_EDIT
 		default:
 			action = ACTION_VIEW
+		}
+
+		var entry *Entry
+		if action == ACTION_ADD {
+			entry = EntryFromQuery(query)
+		} else {
+			var err error
+			entry, err = database.Get(email, key)
+			if err != nil {
+				return 404, "", nil
+			}
 		}
 
 		return 200, "files/edit.html", map[string]interface{}{
