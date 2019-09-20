@@ -1,3 +1,4 @@
+<!--TODO: Fix all URLs -->
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -13,7 +14,7 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/style.css">
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 		<meta name="theme-color" content="#26428b">
 		<link rel="manifest" href="/manifest.json">
@@ -57,10 +58,10 @@
 	</head>
 	<body>
 		{{if ne .Action "View"}}
-		<form action="/update" method="POST">
+		<form action="{{if eq .Action "Edit"}}/do/update{{else}}/do/add{{end}}" method="POST">
 		{{end}}
 			<div class="title with-icon">
-				<a href="/list?user={{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
+				<a href="/{{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
 				<h1 style="flex-grow:1">{{.Action}} entry</h1>
 				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>		
@@ -72,7 +73,7 @@
 					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="{{.Entry.Hours}}" {{if eq .Action "View"}}disabled{{end}} />
 					<input name="date" class="textfield" type="date" {{if not .User.Admin}}min="{{(time -30).Format "2006-01-02"}}"{{end}} placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="{{.Entry.Date.Format "2006-01-02"}}" placeholder="Date (e.g. 2018-10-31)" {{if eq .Action "View"}}disabled{{end}} />
 				</div>
-				<input name="entry" type="hidden" value="{{.EntryIndex}}">
+				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
 				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
 				
@@ -93,16 +94,16 @@
 					<span style="float:right;margin-top:8px">
 						{{if eq .Action "Edit"}}
 							{{if and .User.Admin .Entry.Flagged}}
-								<button formaction="/unflag" class="button" type="submit" style="margin-right:8px">Not Suspicious</button>
+								<button formaction="/do/unflag" class="button" type="submit" style="margin-right:8px">Not Suspicious</button>
 							{{end}}
-							<button formaction="/delete" class="button" type="submit" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
-							<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-left:8px">Duplicate</a>
+							<button formaction="/do/delete" class="button" type="submit" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
+							<a class="button" href="/duplicate?entry={{.Key}}&user={{.Student.Email}}" style="margin-left:8px">Duplicate</a>
 						{{end}}
-						<a class="button" style="margin-left:8px" href="/list?user={{.Student.Email}}">Cancel</a> 
+						<a class="button" style="margin-left:8px" href="/{{.Student.Email}}">Cancel</a> 
 					</span>
 				{{else}}
-					<a class="button strong" href="/list?user={{.Student.Email}}" style="margin-top:8px">Back</a>
-					<a class="button" href="/duplicate?entry={{.EntryIndex}}&user={{.Student.Email}}" style="margin-top:8px;float:right">Duplicate</a>
+					<a class="button strong" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
+					<a class="button" href="/duplicate?entry={{.Key}}&user={{.Student.Email}}" style="margin-top:8px;float:right">Duplicate</a>
 				{{end}}
 			</main>
 			{{if ne .Action "View"}}

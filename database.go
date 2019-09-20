@@ -170,9 +170,10 @@ func NewDatabase(configFile string, databaseURL string) (*Database, error) {
 	}, nil
 }
 
+// Returns the entry if it does exist, EmptyEntry() if it doesn't.
 func (dab *Database) Get(email string, key string) (*Entry, error) {
-	entry := new(Entry)
-	err := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key).Get(dab.ctx, &entry)
+	entry := EmptyEntry()
+	err := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key).Get(dab.ctx, entry)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +240,12 @@ func (dab *Database) ListSorted(email string) ([]string, EntryList, error) {
 	})
 
 	return keylist, list, nil
+}
+
+func (dab *Database) User(email string) UserData {
+	user := UserData{Email: email, Name: email}
+	dab.db.NewRef("/students").Child(dbCodeEmail(email)).Get(dab.ctx, &user)
+	return user
 }
 
 // deprecated

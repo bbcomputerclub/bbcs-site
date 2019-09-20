@@ -14,7 +14,7 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		 
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/style.css">
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 		<meta name="theme-color" content="#26428b">
 		<link rel="manifest" href="/manifest.json">
@@ -32,7 +32,7 @@
 	<body>
 		<div class="title {{if .User.Admin}}with-icon{{end}}">
 			{{- if .User.Admin}}
-				<a href="/admin" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
+				<a href="/all" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
 			{{end -}}
 			<h1 style="flex-grow:1">{{.Student.Name}}'s <span class="hide-med">community service</span> hours</h1>
 			<span>{{.User.Email}}</span>
@@ -40,15 +40,15 @@
 		</div>
 		<div class="title-spacer"></div>
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
-			<span style="float:right" {{- if lt .StudentEntries.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.Years}} year">
+			<span style="float:right" {{- if lt .Entries.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.Years}} year">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
-			<b>{{.StudentEntries.Total}}</b></span></main>
+			<b>{{.Entries.Total}}</b></span></main>
 		<ul class="list linked" id="hours">
 		{{- $global := .}}
-		{{- range $id := .StudentEntriesId}}
-			{{- $entry := (index $global.StudentEntries $id)}}
+		{{- range $id := .Keys}}
+			{{- $entry := (index $global.Entries $id)}}
 			{{- if $entry}}
-				<li><a href="/edit?entry={{$id}}&user={{$global.Student.Email}}">
+				<li><a href="/{{$global.Student.Email}}/{{$id}}">
 				{{$entry.Name}}
 				<div style="float:right">
 				<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
@@ -58,6 +58,6 @@
 			{{end -}}
 		{{end -}}
 		</ul>
-		<a id="add" href="/add?user={{.Student.Email}}" class="button strong corner">Add</a>		
+		<a id="add" href="/{{.Student.Email}}/add" class="button strong corner">Add</a>		
    </body>
 </html>

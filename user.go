@@ -2,12 +2,9 @@ package main
 
 import (
 	"encoding/csv"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -24,8 +21,10 @@ type UserData struct {
 	Grade uint   // Graduation Year
 	Email string // Email
 	Late  uint   // Years Late
+	//	Admin bool
 }
 
+// TODO: Get rid of this
 // Get whether the user is an admin.
 // The list of admins is located at data/admins.txt.
 func (u UserData) Admin() bool {
@@ -88,43 +87,7 @@ func (u UserData) Required() uint {
 	return u.Years() * 20
 }
 
-// Passes token through Google servers to validate it. Returns a UserData
-func UserFromToken(token string) (UserData, error) {
-	// Next 8 lines: Retrieves data from Google servers
-	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
-	if err != nil {
-		return UserData{}, errors.New("Something went wrong. Try again.")
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return UserData{}, errors.New("Something went wrong. Try again.")
-	}
-
-	// The data is stored in JSON. Unmarshal the data
-	data := make(map[string]interface{})
-	json.Unmarshal(body, &data)
-
-	// If the error field is present, there is an error
-	if data["error"] != nil {
-		return UserData{}, errors.New("Not signed in: " + fmt.Sprint(data["error"]))
-	}
-
-	// Make sure the domain is Blind Brook (the account is from Blind Brook)
-	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
-		return UserData{}, errors.New("That account isn't associated with Blind Brook.")
-	}
-
-	out, ok := StudentList[fmt.Sprint(data["email"])]
-
-	// Create UserData struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
-	if !ok {
-		out.Email = fmt.Sprint(data["email"])
-		out.Name = fmt.Sprint(data["name"])
-	}
-
-	return out, nil
-}
-
+// TODO: THis should _probably_ go in Database
 // Creates a user from an email
 func UserFromEmail(email string) UserData {
 	data, ok := StudentList[email]

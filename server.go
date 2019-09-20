@@ -6,18 +6,16 @@
 package main
 
 import (
-	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"net/http"
-	"github.com/gorilla/mux"
 	"net/url"
 	"os"
-	"path"
-	"sort"
 	"strings"
 	"time"
 )
@@ -31,6 +29,30 @@ var (
 	database *Database = nil
 	tokenMap *TokenMap = NewTokenMap()
 )
+
+const (
+	ACTION_VIEW = "View"
+	ACTION_ADD  = "Add"
+	ACTION_EDIT = "Edit"
+)
+
+var funcMap = template.FuncMap{
+	"time": func(from int) time.Time {
+		return time.Now().AddDate(0, 0, from)
+	},
+	"fmtordinal": func(in uint) string {
+		if in%10 == 1 && in != 11 {
+			return fmt.Sprint(in) + "st"
+		}
+		if in%10 == 2 && in != 12 {
+			return fmt.Sprint(in) + "nd"
+		}
+		if in%10 == 3 && in != 13 {
+			return fmt.Sprint(in) + "rd"
+		}
+		return fmt.Sprint(in) + "th"
+	},
+}
 
 func init() {
 	credentials := os.Getenv("DATABASE_CREDENTIALS")
@@ -50,143 +72,11 @@ func init() {
 	}
 }
 
-// Returns user and student
-func UsersFromRequest(r *http.Request, query url.Values) (UserData, UserData, error) {
-	sidc, err := r.Cookie("BBCS_SESSION_ID")
-	if err != nil {
-		return UserData{}, UserData{}, errors.New("not signed in: " + err.Error())
+func getToken(r *http.Request) string {
+	if cookie, err := r.Cookie("BBCS_SESSION_ID"); err == nil {
+		return cookie.Value
 	}
-
-	user, ok := tokenMap.Get(sidc.Value)
-	if !ok {
-		return UserData{}, UserData{}, errors.New("can't sign in: token invalid")
-	}
-
-	if user.Admin() && len(query.Get("user")) != 0 {
-		return user, UserFromEmail(query.Get("user")), nil
-	} else {
-		return user, user, nil
-	}
-}
-
-// TODO: This shouldn't exist; different pages have different stuffs
-type FileHandler string
-type FileHandlerData struct {
-	Entry    *Entry // Current entry, or nil
-	EntryKey string // Key of entry
-
-	User    UserData // Current logged-in user
-	Student UserData // Which student he is looking at
-
-	StudentEntries   EntryList
-	StudentEntriesId []string
-
-	Students map[uint][]UserData
-	Grades   []uint
-}
-
-const (
-	ACTION_VIEW = "View"
-	ACTION_EDIT = "Edit"
-	ACTION_ADD  = "Add"
-)
-
-func (d FileHandlerData) Action() string {
-	switch {
-	case d.EntryKey == "":
-		return ACTION_ADD
-	case !d.Entry.Editable() && !d.User.Admin():
-		return ACTION_VIEW
-	default:
-		return ACTION_EDIT
-	}
-}
-
-func (f FileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	data, err := dataFromRequest(r)
-	if err != nil {
-		w.Header().Set("Refresh", "0;url=/?"+url.QueryEscape(r.URL.String())+"#error:"+url.QueryEscape(err.Error()))
-		w.WriteHeader(400)
-		return
-	}
-
-	t, err := template.New(path.Base(string(f))).Funcs(template.FuncMap{
-		"time": func(from int) time.Time {
-			return time.Now().AddDate(0, 0, from)
-		},
-		"fmtordinal": func(in uint) string {
-			if in%10 == 1 && in != 11 {
-				return fmt.Sprint(in) + "st"
-			}
-			if in%10 == 2 && in != 12 {
-				return fmt.Sprint(in) + "nd"
-			}
-			if in%10 == 3 && in != 13 {
-				return fmt.Sprint(in) + "rd"
-			}
-			return fmt.Sprint(in) + "th"
-		},
-	}).ParseFiles(string(f))
-	if err != nil {
-		w.WriteHeader(500)
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	err = t.Execute(w, data)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-}
-
-func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
-	out := new(FileHandlerData)
-
-	query := r.URL.Query()
-	var err error
-	out.User, out.Student, err = UsersFromRequest(r, query)
-	if err != nil {
-		return nil, err
-	}
-
-	if out.User.Admin() {
-		grades := make(map[uint]bool)
-		out.Students = make(map[uint][]UserData)
-		for _, student := range StudentList {
-			if student.RealGrade() <= 12 {
-				out.Students[student.RealGrade()] = append(out.Students[student.RealGrade()], student)
-				grades[student.RealGrade()] = true
-			}
-		}
-
-		for grade, _ := range grades {
-			out.Grades = append(out.Grades, grade)
-		}
-
-		sort.Slice(out.Grades, func(i, j int) bool {
-			return out.Grades[i] > out.Grades[j]
-		})
-	}
-
-	out.StudentEntriesId, out.StudentEntries, err = database.ListSorted(out.Student.Email)
-
-	for _, slice := range out.Students {
-		sort.Slice(slice, func(i, j int) bool {
-			return slice[i].Name < slice[j].Name
-		})
-	}
-
-	out.EntryKey = query.Get("entry")
-	if out.EntryKey != "" {
-		out.Entry, err = database.Get(out.Student.Email, out.EntryKey)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		out.Entry = EntryFromQuery(query)
-	}
-
-	return out, nil
+	return ""
 }
 
 func main() {
@@ -194,10 +84,6 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			w.WriteHeader(404)
-			return
-		}
 		http.ServeFile(w, r, "files/login.html")
 	})
 
@@ -226,7 +112,7 @@ func main() {
 				return
 			}
 			body := string(bodybyte)
-			size := filename[0: len(filename)-4]
+			size := filename[0 : len(filename)-4]
 
 			// Replace width and height attributes
 			i := strings.Index(body, "width=\"")
@@ -266,141 +152,140 @@ func main() {
 	 * 	  token: The token
 	 *    redirect: An escaped URI
 	 */
+	// TODO: This should be POST
 	r.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
-		user, err := UserFromToken(r.URL.Query().Get("token"))
+		query := r.URL.Query()
+
+		token, user, err := tokenMap.AddGToken(query.Get("token"))
 		if err != nil {
 			w.Header().Set("Refresh", "0; url=/#error:"+url.QueryEscape(err.Error()))
 			w.WriteHeader(403)
 			return
 		}
 
-		sid := tokenMap.Add(user)
-		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Value: sid, HttpOnly: true})
+		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Path: "/", Value: token, HttpOnly: true})
 
-		redirect := r.URL.Query().Get("redirect")
-		redirectEsc, err := url.QueryUnescape(redirect)
+		redirect, err := url.QueryUnescape(query.Get("redirect"))
 		if len(redirect) == 0 || err != nil {
 			if user.Admin() {
-				w.Header().Set("Location", "/admin")
+				w.Header().Set("Location", "/all")
 			} else {
-				w.Header().Set("Location", "/list")
+				w.Header().Set("Location", "/"+user.Email)
 			}
 		} else {
-			w.Header().Set("Location", redirectEsc)
+			w.Header().Set("Location", redirect)
 		}
 		w.WriteHeader(303)
 	})
 
+	// TODO: This should be POST
 	r.HandleFunc("/signout", func(w http.ResponseWriter, r *http.Request) {
-		sidC, err := r.Cookie("BBCS_SESSION_ID")
-		if err != nil {
-			w.WriteHeader(400)
-			return
-		}
-		sid := sidC.Value
-		tokenMap.Remove(sid)
+		token := getToken(r)
+		tokenMap.Remove(token)
 
 		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Value: "", MaxAge: -1})
 		w.Header().Set("Location", "/#signout")
 		w.WriteHeader(303)
 	})
 
-	r.Handle("/list", FileHandler("files/list.html"))
-	r.Handle("/admin", FileHandler("files/admin.html"))
-	r.Handle("/edit", FileHandler("files/edit.html"))
-	r.Handle("/flagged", FileHandler("files/flagged.html"))
-
-	r.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		query.Set("entry", "-1")
-		w.Header().Set("Location", "/edit?"+query.Encode())
-		w.WriteHeader(302)
-	})
-
-	r.HandleFunc("/duplicate", func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		_, student, err := UsersFromRequest(r, query)
-		if err != nil {
-			w.WriteHeader(403)
-			return
-		}
-
-		// Get entry
-		key := query.Get("entry")
-
-		entry, err := database.Get(student.Email, key)
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-
-		entry.Date = time.Now()
-
-		newQuery := entry.EncodeQuery()
-		newQuery.Set("entry", "-1")
-		newQuery.Set("user", student.Email)
-		w.Header().Set("Location", "/edit?"+newQuery.Encode())
-		w.WriteHeader(303)
-	})
-
 	// Updates an entry
-	r.HandleFunc("/update", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/do/update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "PUT" {
 			w.Header().Set("Allow", "POST, PUT")
+			io.WriteString(w, "invalid request")
 			w.WriteHeader(405)
 			return
 		}
 
-		r.ParseForm()
-		query := r.PostForm
-
-		user, student, err := UsersFromRequest(r, query)
-		if err != nil {
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
 			w.WriteHeader(403)
+			io.WriteString(w, "invalid token")
+			return
+		}
+		student := database.User(r.PostFormValue("user"))
+		if !user.Admin() && student.Email != user.Email {
+			w.WriteHeader(403)
+			io.WriteString(w, "not enough permissions")
 			return
 		}
 
 		// Get entry
-		key := query.Get("entry")
-
-		newEntry := EntryFromQuery(query)
-		oldEntry, err := database.Get(student.Email, key)
-		if err != nil {
-			oldEntry = nil
-		}
+		key := r.PostFormValue("entry")
+		oldEntry, _ := database.Get(student.Email, key)
+		newEntry := EntryFromQuery(r.PostForm)
 
 		// Make sure entry is editable
-		if !user.Admin() && ((oldEntry != nil && !oldEntry.Editable()) || !newEntry.Editable()) {
+		if (!user.Admin()) && (!oldEntry.Editable() || !newEntry.Editable()) {
 			w.WriteHeader(403)
+			io.WriteString(w, "not enough permissions")
 			return
 		}
-
 		newEntry.SetFlagged()
 
 		// Make changes
 		database.Set(student.Email, key, newEntry)
 
 		// Redirect
-		w.Header().Set("Location", "/list?user="+student.Email)
+		w.Header().Set("Location", "/"+student.Email)
+		w.WriteHeader(302)
+	})
+
+	// Adds an entry
+	r.HandleFunc("/do/add", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" && r.Method != "PUT" {
+			w.Header().Set("Allow", "POST, PUT")
+			io.WriteString(w, "invalid request")
+			w.WriteHeader(405)
+			return
+		}
+
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
+			w.WriteHeader(403)
+			io.WriteString(w, "invalid token")
+			return
+		}
+		student := database.User(r.PostFormValue("user"))
+		if !user.Admin() && student.Email != user.Email {
+			w.WriteHeader(403)
+			io.WriteString(w, "not enough permissions")
+			return
+		}
+
+		// Get entry
+		newEntry := EntryFromQuery(r.PostForm)
+
+		// Make sure entry is editable
+		if !user.Admin() && !newEntry.Editable() {
+			w.WriteHeader(403)
+			io.WriteString(w, "not enough permissions")
+			return
+		}
+		newEntry.SetFlagged()
+
+		// Make changes
+		database.Add(student.Email, newEntry)
+
+		// Redirect
+		w.Header().Set("Location", "/"+student.Email)
 		w.WriteHeader(302)
 	})
 
 	// Removes an entry
-	r.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/do/delete", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "DELETE" {
 			w.Header().Set("Allow", "POST, DELETE")
 			w.WriteHeader(405)
 			return
 		}
 
-		r.ParseForm()
-		query := r.PostForm
-
-		user, student, err := UsersFromRequest(r, query)
-		if err != nil {
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
 			w.WriteHeader(403)
 			return
 		}
+		student := database.User(r.PostFormValue("user"))
 
 		// Get entry
 		key := r.PostFormValue("entry")
@@ -425,37 +310,132 @@ func main() {
 	})
 
 	// Marks an entry as not suspicious
-	r.HandleFunc("/unflag", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/do/unflag", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "PU	T" {
 			w.Header().Set("Allow", "POST, PUT")
 			w.WriteHeader(405)
 			return
 		}
 
-		r.ParseForm()
-		query := r.PostForm
-
-		user, student, err := UsersFromRequest(r, query)
-		if err != nil || !user.Admin() {
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok || !user.Admin() {
 			w.WriteHeader(403)
 			return
 		}
+		student := database.User(r.PostFormValue("user"))
 
 		// Get entry
-		key := query.Get("entry")
+		key := r.PostFormValue("entry")
 
 		// Make changes
-		entry, err := database.Get(student.Email, key)
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		}
-		entry.Flagged = false
-		database.Set(student.Email, key, entry)
+		database.Flag(student.Email, key, false)
 
 		// Redirect
 		w.Header().Set("Location", "/flagged")
 		w.WriteHeader(302)
+	})
+
+	r.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
+	r.HandleFunc("/all/flagged", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
+	r.HandleFunc("/{email}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		email := vars["email"]
+
+		temp, err := template.New("list.html").Funcs(funcMap).ParseFiles("files/list.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok || (!user.Admin() && user.Email != email) {
+			w.WriteHeader(403)
+			io.WriteString(w, "invalid token or not enough permissions")
+			return
+		}
+
+		keys, entries, err := database.ListSorted(email)
+		if err != nil {
+			w.WriteHeader(500)
+			return
+		}
+
+		data := map[string]interface{}{
+			"User":    user,
+			"Student": database.User(email),
+			"Entries": entries,
+			"Keys":    keys,
+		}
+
+		if err := temp.Execute(w, data); err != nil {
+			log.Println(err)
+		}
+	})
+
+	r.HandleFunc("/{email}/{key}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		email := vars["email"]
+		key := vars["key"]
+
+		temp, err := template.New("edit.html").Funcs(funcMap).ParseFiles("files/edit.html")
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(500)
+			return
+		}
+
+		user, ok := tokenMap.Get(getToken(r))
+		if !ok {
+			w.WriteHeader(403)
+			io.WriteString(w, "invalid token")
+			return
+		}
+
+		var entry *Entry
+		if key == "add" {
+			entry = EmptyEntry()
+			// TODO: EntryFromQuery
+		} else {
+			entry, err = database.Get(email, key)
+			if err != nil {
+				w.WriteHeader(404)
+				io.WriteString(w, "entry not found")
+				return
+			}
+		}
+
+		action := ""
+		switch {
+		case key == "add":
+			action = ACTION_ADD
+		case entry.Editable() || user.Admin():
+			action = ACTION_EDIT
+		default:
+			action = ACTION_VIEW
+		}
+
+		data := map[string]interface{}{
+			"User":    user,
+			"Student": database.User(email),
+			"Entry":   entry,
+			"Key":     key,
+			"Action":  action,
+		}
+
+		if err := temp.Execute(w, data); err != nil {
+			log.Println(err)
+		}
+	})
+
+	r.HandleFunc("/{email}/{key}/duplicate", func(w http.ResponseWriter, r *http.Request) {
+		// TODO
 	})
 
 	port := os.Getenv("PORT")
