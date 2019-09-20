@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-	{{if .User.Admin}}
 	<head>
 		<title>Suspicious Entries</title>
 		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
@@ -14,7 +13,7 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		 
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/style.css">
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 		<meta name="theme-color" content="#26428b">
 		<link rel="manifest" href="/manifest.json">
@@ -27,6 +26,9 @@
 		</style>
 	</head>
 	<body>
+		<script>
+		{{.Students}}
+		</script>
 		<div class="title with-icon">
 			<a href="/all" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
 			<h1 style="flex-grow:1">Suspicious Entries</h1>
@@ -36,28 +38,19 @@
 		<div class="title-spacer"></div>
 		<ul class="list linked">
 		{{- $global := .}}
-		{{- range $grade, $students := $global.Students}}
-			{{- range $student := $students}}
-				{{- range $id, $entry := $student.Entries}}
-					{{- if $entry}}{{if $entry.Flagged}}
-						<li><a href="/{{$student.Email}}/{{$id}}">
-							{{$entry.Name}}
-							<div style="float:right">
-								<span style="margin-right:48px">{{$student.Name}}</span>
-								<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
-							</div>
-					<!-- TODO: Add way to unflag directly from here -->
-						</li>
-					{{end}}{{end -}}
-				{{end -}}
-			{{end -}}
+		{{- range $id, $entry := .Entries}}
+			{{- $key := index $id 1}}
+			{{- $student := index $global.Students (index $id 0)}}
+			<li><a href="/{{$student.Email}}/{{$key}}">
+				{{$entry.Name}}
+				<div style="float:right">
+					<span style="margin-right:48px">{{$student.Name}}</span>
+					<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+				</div>
+			</a>
+		<!-- TODO: Add way to unflag directly from here -->
+			</li>
 		{{end -}}
 		</ul>
 	</body>
-	{{else}}
-   	<head>
-   		<title>Redirect</title>
-   		<meta http-equiv="refresh" content="0;url=/list">
-   	</head>
-   {{end}}
 </html>

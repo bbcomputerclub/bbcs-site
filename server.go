@@ -359,7 +359,7 @@ func main() {
 			return 403, "", nil
 		}
 
-		users, err := database.Users()
+		users, err := database.UsersByGrade()
 		if err != nil {
 			return 500, "", nil
 		}
@@ -386,7 +386,25 @@ func main() {
 	}))
 
 	r.Handle("/all/flagged", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		return 500, "", nil
+		if !user.Admin {
+			return 403, "", nil
+		}
+
+		flagged, err := database.Flagged()
+		if err != nil {
+			return 500, "", nil
+		}
+
+		users, err := database.Users()
+		if err != nil {
+			return 500, "", nil
+		}
+
+		return 200, "files/flagged.html", map[string]interface{}{
+			"User":     user,
+			"Students": users,
+			"Entries":  flagged,
+		}
 	}))
 
 	r.Handle("/{email}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {

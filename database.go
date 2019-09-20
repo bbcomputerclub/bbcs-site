@@ -130,8 +130,24 @@ func (dab *Database) User(email string) UserData {
 	return user
 }
 
-// Method User returns a list of users, sorted by grade (0 = no grade).
-func (dab *Database) Users() (map[uint][]UserData, error) {
+func (dab *Database) Users() (map[string]UserData, error) {
+	m := make(map[string]UserData)
+	query := dab.db.NewRef("/users").OrderByKey()
+	err := query.Get(dab.ctx, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	for email, user := range m {
+		delete(m, email)
+		m[user.Email] = user
+	}
+
+	return m, err
+}
+
+// Method UsersByGrade returns a list of users, sorted by grade (0 = no grade).
+func (dab *Database) UsersByGrade() (map[uint][]UserData, error) {
 	m := make(map[string]UserData)
 	query := dab.db.NewRef("/users").OrderByKey()
 	err := query.Get(dab.ctx, &m)
@@ -145,4 +161,23 @@ func (dab *Database) Users() (map[uint][]UserData, error) {
 	}
 
 	return list, nil
+}
+
+func (dab *Database) Flagged() (map[[2]string]*Entry, error) {
+	entries := make(map[string]EntryList)
+	err := dab.db.NewRef("/entries").OrderByKey().Get(dab.ctx, &entries)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[[2]string]*Entry)
+	for email, list := range entries {
+		for key, entry := range list {
+			if entry.Flagged {
+				m[[2]string{dbDecodeEmail(email), key}] = entry
+			}
+		}
+	}
+
+	return m, nil
 }
