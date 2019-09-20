@@ -75,7 +75,7 @@ type FileHandlerData struct {
 	User    UserData // Current logged-in user
 	Student UserData // Which student he is looking at
 
-	StudentEntries   map[string]*Entry
+	StudentEntries   EntryList
 	StudentEntriesId []string
 
 	Students map[uint][]UserData
