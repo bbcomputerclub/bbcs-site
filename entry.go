@@ -161,6 +161,7 @@ func (entry *Entry) EncodeQuery() url.Values {
 	out.Set("hours", strconv.FormatUint(uint64(entry.Hours), 10))
 	out.Set("date", entry.Date.Format("2006-01-02"))
 	out.Set("org", entry.Organization)
+	out.Set("description", entry.Description)
 	if entry.ContactName != "" {
 		out.Set("contactname", entry.ContactName)
 	}
