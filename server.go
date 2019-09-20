@@ -13,11 +13,11 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"github.com/gorilla/mux"
 	"net/url"
 	"os"
 	"path"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -192,37 +192,33 @@ func dataFromRequest(r *http.Request) (*FileHandlerData, error) {
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	/* Static pages */
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	r := mux.NewRouter()
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			w.WriteHeader(404)
 			return
 		}
-
 		http.ServeFile(w, r, "files/login.html")
 	})
 
-	http.HandleFunc("/icons/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, ".png") {
+	r.HandleFunc("/icons/{file:.[0-9]+\\.(?:svg|png)}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		filename := vars["file"]
+
+		if strings.HasSuffix(filename, ".png") {
 			/* PNG
 			 * PNG files are stored in the directory as icon-N.png
 			 * This section simply retrieves the file and serves it
 			 */
-			file, err := os.Open("icons/icon-" + r.URL.Path[7:])
+			file, err := os.Open("icons/icon-" + filename)
 			if err != nil {
-				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(404)
 				return
 			}
 			w.Header().Set("Content-Type", "image/png")
 			io.Copy(w, file)
 			return
-		} else if strings.HasSuffix(r.URL.Path, ".svg") {
-			/* SVG
-			 * SVG code is found in icon.svg
-			 * This section retrieves icon.svg, replaces the width and height attributes, and then serves the modified file
-			 */
-			// Get icon.svg
+		} else if strings.HasSuffix(vars["file"], ".svg") {
 			bodybyte, err := ioutil.ReadFile("icons/icon.svg")
 			if err != nil {
 				w.Header().Set("Content-Type", "text/plain")
@@ -230,23 +226,16 @@ func main() {
 				return
 			}
 			body := string(bodybyte)
-			len := r.URL.Path[7 : len(r.URL.Path)-4]
-
-			// Make sure filename is an integer
-			if _, err := strconv.Atoi(len); err != nil {
-				w.Header().Set("Content-Type", "text/plain")
-				w.WriteHeader(404)
-				return
-			}
+			size := filename[0: len(filename)-4]
 
 			// Replace width and height attributes
 			i := strings.Index(body, "width=\"")
 			j := strings.Index(body[i+7:], "\"") + i + 7
-			body = body[0:i+7] + len + body[j:]
+			body = body[0:i+7] + size + body[j:]
 
 			i = strings.Index(body, "height=\"")
 			j = strings.Index(body[i+8:], "\"") + i + 8
-			body = body[0:i+8] + len + body[j:]
+			body = body[0:i+8] + size + body[j:]
 
 			// Serve
 			w.Header().Set("Content-Type", "image/svg+xml")
@@ -256,19 +245,19 @@ func main() {
 		w.WriteHeader(404)
 	})
 
-	http.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "files/style.css")
 	})
 
-	http.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "files/manifest.json")
 	})
 
-	http.HandleFunc("/generator", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/generator", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "files/generator.html")
 	})
 
-	http.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
+	r.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
 
 	/* GET /signin
 	 *
@@ -277,7 +266,7 @@ func main() {
 	 * 	  token: The token
 	 *    redirect: An escaped URI
 	 */
-	http.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/signin", func(w http.ResponseWriter, r *http.Request) {
 		user, err := UserFromToken(r.URL.Query().Get("token"))
 		if err != nil {
 			w.Header().Set("Refresh", "0; url=/#error:"+url.QueryEscape(err.Error()))
@@ -302,7 +291,7 @@ func main() {
 		w.WriteHeader(303)
 	})
 
-	http.HandleFunc("/signout", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/signout", func(w http.ResponseWriter, r *http.Request) {
 		sidC, err := r.Cookie("BBCS_SESSION_ID")
 		if err != nil {
 			w.WriteHeader(400)
@@ -316,19 +305,19 @@ func main() {
 		w.WriteHeader(303)
 	})
 
-	http.Handle("/list", FileHandler("files/list.html"))
-	http.Handle("/admin", FileHandler("files/admin.html"))
-	http.Handle("/edit", FileHandler("files/edit.html"))
-	http.Handle("/flagged", FileHandler("files/flagged.html"))
+	r.Handle("/list", FileHandler("files/list.html"))
+	r.Handle("/admin", FileHandler("files/admin.html"))
+	r.Handle("/edit", FileHandler("files/edit.html"))
+	r.Handle("/flagged", FileHandler("files/flagged.html"))
 
-	http.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		query.Set("entry", "-1")
 		w.Header().Set("Location", "/edit?"+query.Encode())
 		w.WriteHeader(302)
 	})
 
-	http.HandleFunc("/duplicate", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/duplicate", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		_, student, err := UsersFromRequest(r, query)
 		if err != nil {
@@ -355,7 +344,7 @@ func main() {
 	})
 
 	// Updates an entry
-	http.HandleFunc("/update", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "PUT" {
 			w.Header().Set("Allow", "POST, PUT")
 			w.WriteHeader(405)
@@ -397,7 +386,7 @@ func main() {
 	})
 
 	// Removes an entry
-	http.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/delete", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "DELETE" {
 			w.Header().Set("Allow", "POST, DELETE")
 			w.WriteHeader(405)
@@ -436,7 +425,7 @@ func main() {
 	})
 
 	// Marks an entry as not suspicious
-	http.HandleFunc("/unflag", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/unflag", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" && r.Method != "PU	T" {
 			w.Header().Set("Allow", "POST, PUT")
 			w.WriteHeader(405)
@@ -469,28 +458,20 @@ func main() {
 		w.WriteHeader(302)
 	})
 
-	port := uint64(0)
-	var err error = nil
-	switch len(os.Args) {
-	case 0, 1:
-		port = 8080
-	case 2:
-		port, err = strconv.ParseUint(os.Args[1], 10, 64)
-		if err == nil {
-			break
-		}
-		fallthrough
-	default:
-		fmt.Fprintf(os.Stderr, "usage: %s [port]", os.Args[0])
+	port := os.Getenv("PORT")
+	if port == "" {
+		panic("$PORT must be set")
 	}
 
-	fmt.Printf("http://localhost:%v/\n", port)
-	if err = StudentListInit(); err != nil {
+	fmt.Printf("http://localhost:%s/\n", port)
+
+	if err := StudentListInit(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 		return
 	}
-	err = http.ListenAndServe(":"+fmt.Sprint(port), nil)
+
+	err := http.ListenAndServe(":"+port, r)
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
 }
