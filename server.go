@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -41,13 +42,13 @@ var funcMap = template.FuncMap{
 		return time.Now().AddDate(0, 0, from)
 	},
 	"fmtordinal": func(in uint) string {
-		if in%10 == 1 && in != 11 {
+		if in%10 == 1 && in%100 != 11 {
 			return fmt.Sprint(in) + "st"
 		}
-		if in%10 == 2 && in != 12 {
+		if in%10 == 2 && in%100 != 12 {
 			return fmt.Sprint(in) + "nd"
 		}
-		if in%10 == 3 && in != 13 {
+		if in%10 == 3 && in%100 != 13 {
 			return fmt.Sprint(in) + "rd"
 		}
 		return fmt.Sprint(in) + "th"
@@ -79,7 +80,7 @@ func getToken(r *http.Request) string {
 	return ""
 }
 
-// A handler.
+// Type ActionHandler represents a POST request handler.
 //
 // Passes the student's email as the first argument. If the user is not authenticated or
 // the user does not have sufficient permissions, an empty string is passed as the first argument.
@@ -89,7 +90,7 @@ type ActionHandler func(student string, user UserData, query url.Values) (uint16
 
 func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		w.Header().Set("Allow", "POST, PUT")
+		w.Header().Set("Allow", "POST")
 		w.WriteHeader(405)
 		return
 	}
@@ -110,6 +111,48 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Location", loc)
 	}
 	w.WriteHeader(int(status))
+}
+
+//
+type TemplateHandler func(student string, user UserData, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
+
+func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(405)
+	}
+
+	user, ok := tokenMap.Get(getToken(r))
+	if !ok {
+		w.Header().Set("Refresh", "0;url=/")
+		w.WriteHeader(401)
+		return
+	}
+
+	vars := mux.Vars(r)
+	email := ""
+	if user.Admin() || user.Email == vars["email"] {
+		email = vars["email"]
+	}
+
+	code, path, data := f(email, user, r.URL.Query(), vars)
+
+	if code < 200 || code >= 300 {
+		w.WriteHeader(int(code))
+		return
+	}
+
+	temp, err := template.New(filepath.Base(path)).Funcs(funcMap).ParseFiles(path)
+	if err != nil {
+		log.Printf("error parsing %s: %s", path, err)
+		w.WriteHeader(500)
+		return
+	}
+
+	w.WriteHeader(int(code))
+	if err = temp.Execute(w, data); err != nil {
+		log.Printf("error serving %s: %s", path, err)
+	}
 }
 
 func main() {
@@ -308,71 +351,35 @@ func main() {
 
 	})
 
-	r.HandleFunc("/{email}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		email := vars["email"]
-
-		temp, err := template.New("list.html").Funcs(funcMap).ParseFiles("files/list.html")
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
-			return
-		}
-
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok || (!user.Admin() && user.Email != email) {
-			w.WriteHeader(403)
-			io.WriteString(w, "invalid token or not enough permissions")
-			return
-		}
-
+	r.Handle("/{email}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		keys, entries, err := database.ListSorted(email)
 		if err != nil {
-			w.WriteHeader(500)
-			return
+			return 404, "", nil
 		}
 
-		data := map[string]interface{}{
+		return 200, "files/list.html", map[string]interface{}{
 			"User":    user,
 			"Student": database.User(email),
 			"Entries": entries,
 			"Keys":    keys,
 		}
+	}))
 
-		if err := temp.Execute(w, data); err != nil {
-			log.Println(err)
+	r.Handle("/{email}/{key}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		if email == "" {
+			return 403, "", nil
 		}
-	})
 
-	r.HandleFunc("/{email}/{key}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		email := vars["email"]
 		key := vars["key"]
-
-		temp, err := template.New("edit.html").Funcs(funcMap).ParseFiles("files/edit.html")
-		if err != nil {
-			log.Println(err)
-			w.WriteHeader(500)
-			return
-		}
-
-		user, ok := tokenMap.Get(getToken(r))
-		if !ok {
-			w.WriteHeader(403)
-			io.WriteString(w, "invalid token")
-			return
-		}
 
 		var entry *Entry
 		if key == "add" {
-			entry = EmptyEntry()
-			// TODO: EntryFromQuery
+			entry = EntryFromQuery(query)
 		} else {
+			var err error
 			entry, err = database.Get(email, key)
 			if err != nil {
-				w.WriteHeader(404)
-				io.WriteString(w, "entry not found")
-				return
+				return 404, "", nil
 			}
 		}
 
@@ -386,18 +393,14 @@ func main() {
 			action = ACTION_VIEW
 		}
 
-		data := map[string]interface{}{
+		return 200, "files/edit.html", map[string]interface{}{
 			"User":    user,
 			"Student": database.User(email),
 			"Entry":   entry,
 			"Key":     key,
 			"Action":  action,
 		}
-
-		if err := temp.Execute(w, data); err != nil {
-			log.Println(err)
-		}
-	})
+	}))
 
 	r.HandleFunc("/{email}/{key}/duplicate", func(w http.ResponseWriter, r *http.Request) {
 		// TODO
