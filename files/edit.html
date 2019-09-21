@@ -62,7 +62,7 @@
 		{{end}}
 			<div class="title with-icon">
 				<a href="/{{.Student.Email}}" class="material-icons icon" aria-label="Back" {{if ne .Action "View"}}onclick="return confirm('Leave? Changes will be lost')"{{end}}>&#xe5c4;</a>
-				<h1 style="flex-grow:1">{{.Action}} entry</h1>
+				<h1 style="flex-grow:1">{{.Action}} Entry</h1>
 				<span>{{.User.Email}}</span>
 				<a href="/signout" class="button light">Sign out</a>
 			</div>
@@ -76,7 +76,7 @@
 				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
 				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
-				
+
 				<div class="flex">
 					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
 					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
@@ -88,9 +88,9 @@
 				{{if ne .Action "Add"}}
 				<div style="margin-top:8px" id="lastmodified"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
 				{{end}}
-				
+
 				{{if ne .Action "View"}}
-					<button type="submit" class="button strong" style="margin-top:8px">Save</button>
+					<a class="button" style="margin-top:8px" href="/{{.Student.Email}}">Cancel</a>
 					<span style="float:right;margin-top:8px">
 						{{if eq .Action "Edit"}}
 							{{if and .User.Admin .Entry.Flagged}}
@@ -99,11 +99,11 @@
 							<button formaction="/do/delete" class="button" type="submit" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
 							<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-left:8px">Duplicate</a>
 						{{end}}
-						<a class="button" style="margin-left:8px" href="/{{.Student.Email}}">Cancel</a> 
+						<button type="submit" class="button strong" style="margin-left:8px">Save</button>
 					</span>
 				{{else}}
-					<a class="button strong" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
-					<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-top:8px;float:right">Duplicate</a>
+					<a class="button" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
+					<a class="button strong" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-top:8px;float:right">Duplicate</a>
 				{{end}}
 			</main>
 			{{if ne .Action "View"}}

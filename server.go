@@ -248,7 +248,6 @@ func main() {
 				w.Header().Set("Location", "/"+user.Email)
 			}
 		} else {
-			//			log.Println(redirect)
 			w.Header().Set("Location", redirect)
 		}
 		w.WriteHeader(303)
