@@ -12,9 +12,40 @@
     <meta name="application-name" content="BBCS Link Generator">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
     <meta name="theme-color" content="#26428b">
+    <script src="/qrcode.js"></script>
+    <style>
+#bottom {
+    text-align: center;
+}
+#qrcode {
+    margin: auto;
+    width: 512px;
+}
+#out {
+    display: block;
+    margin-bottom: 16px;
+}
+@media print {
+    .title-spacer {
+        height: 0;
+    }
+    .title {
+        display: none;
+    }
+    textarea, input, button {
+        display: none !important;
+    }
+    #name {
+        display: block !important;
+        border: 0;
+        text-align: center;
+        font-size: 32px;
+    }
+}
+    </style>
 </head>
 
 <body>
@@ -38,34 +69,49 @@
 
 		<textarea class="textfield" placeholder="Description" id="description"></textarea>
         ​
-        <div>
+        <div id="bottom">
             <a id="out"></a>
+            <div id="qrcode"></div>
         </div>
 
+        <button id="print" class="button strong corner">Print</button>
     </main>
-<!-- TODO: qr code? -->
-<script>
-	var elems = document.getElementsByTagName("input");
-	for (var i = 0; i < elems.length; i++) {
-		elems[i].oninput = createLink;
-	}
+	<script>
+        (function(){
+            var qrcode = new QRCode(document.getElementById("qrcode"), {
+                width: 512,
+                height: 512
+            });
 
-    function createLink() {
-	    var link = location.protocol + "//" + location.host + "/add?";
+		    var elems = document.getElementsByTagName("input");
+            elems = Array.from(elems).concat(document.getElementsByTagName("textarea"));
+		    for (var i = 0; i < elems.length; i++) {
+			    elems[i].oninput = createLink;
+		    }
 
-		for (var elem of elems) {
-			if (elem.value) {
-				link += elem.id + "=" + encodeURIComponent(elem.value) + "&" ;
-			}
-		}
+		    function createLink() {
+			    var link = location.protocol + "//" + location.host + "/add?";
 
-        link = link.slice(0, -1);
+			    for (var elem of elems) {
+				    if (elem.value) {
+					    link += elem.id + "=" + encodeURIComponent(elem.value) + "&" ;
+				    }
+			    }
 
-		document.getElementById("out").innerHTML = link;
-		document.getElementById("out").href = link;
-	}
+		        link = link.slice(0, -1);
 
-	createLink();
-</script>
+			    document.getElementById("out").innerHTML = link;
+			    document.getElementById("out").href = link;
+                qrcode.clear();
+                qrcode.makeCode(link);
+		    }
+
+		    createLink();
+
+            document.getElementById("print").addEventListener("click", function() {
+                window.print();
+            });
+        })();
+	</script>
 </body>
 </html>

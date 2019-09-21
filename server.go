@@ -210,6 +210,10 @@ func main() {
 		http.ServeFile(w, r, "files/manifest.json")
 	})
 
+	r.HandleFunc("/qrcode.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "files/qrcode.js")
+	})
+
 	r.HandleFunc("/generator", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "files/generator.html")
 	})
