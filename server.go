@@ -119,7 +119,7 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	user, ok := tokenMap.Get(getToken(r))
 	if !ok {
-		w.Header().Set("Refresh", "0;url=/?"+r.URL.Path)
+		w.Header().Set("Refresh", "0;url=/?"+r.URL.Path+"?"+r.URL.RawQuery)
 		w.WriteHeader(401)
 		return
 	}
@@ -267,7 +267,7 @@ func main() {
 	r.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
 		user, ok := tokenMap.Get(getToken(r))
 		if !ok {
-			w.Header().Set("Refresh", "0;url=/?"+r.URL.Path)
+			w.Header().Set("Refresh", "0;url=/?"+r.URL.Path+"?"+r.URL.RawQuery)
 			w.WriteHeader(401)
 			return
 		}
