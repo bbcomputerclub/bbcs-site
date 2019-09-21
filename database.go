@@ -124,14 +124,14 @@ func (dab *Database) ListSorted(email string) ([]string, EntryList, error) {
 }
 
 // Method User returns a user.
-func (dab *Database) User(email string) UserData {
-	user := UserData{Email: email, Name: email}
+func (dab *Database) User(email string) User {
+	user := User{Email: email, Name: email}
 	dab.db.NewRef("/users").Child(dbCodeEmail(email)).Get(dab.ctx, &user)
 	return user
 }
 
-func (dab *Database) Users() (map[string]UserData, error) {
-	m := make(map[string]UserData)
+func (dab *Database) Users() (map[string]User, error) {
+	m := make(map[string]User)
 	query := dab.db.NewRef("/users").OrderByKey()
 	err := query.Get(dab.ctx, &m)
 	if err != nil {
@@ -147,15 +147,15 @@ func (dab *Database) Users() (map[string]UserData, error) {
 }
 
 // Method UsersByGrade returns a list of users, sorted by grade (0 = no grade).
-func (dab *Database) UsersByGrade() (map[uint][]UserData, error) {
-	m := make(map[string]UserData)
+func (dab *Database) UsersByGrade() (map[uint][]User, error) {
+	m := make(map[string]User)
 	query := dab.db.NewRef("/users").OrderByKey()
 	err := query.Get(dab.ctx, &m)
 	if err != nil {
 		return nil, err
 	}
 
-	list := make(map[uint][]UserData)
+	list := make(map[uint][]User)
 	for _, user := range m {
 		list[user.Grade] = append(list[user.Grade], user)
 	}

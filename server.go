@@ -81,7 +81,7 @@ func getToken(r *http.Request) string {
 // the user does not have sufficient permissions, an empty string is passed as the first argument.
 //
 // The 2nd argument is the signed-in user, and the 3rd argument is the original request.
-type ActionHandler func(student string, user UserData, query url.Values) (uint16, string)
+type ActionHandler func(student string, user User, query url.Values) (uint16, string)
 
 func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -109,7 +109,7 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //
-type TemplateHandler func(student string, user UserData, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
+type TemplateHandler func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
 
 func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -276,7 +276,7 @@ func main() {
 	})
 
 	// Updates an entry
-	r.Handle("/do/update", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
+	r.Handle("/do/update", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
@@ -299,7 +299,7 @@ func main() {
 	}))
 
 	// Adds an entry
-	r.Handle("/do/add", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
+	r.Handle("/do/add", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
@@ -319,7 +319,7 @@ func main() {
 	}))
 
 	// Removes an entry
-	r.Handle("/do/delete", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
+	r.Handle("/do/delete", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
 		if email == "" {
 			return 403, ""
 		}
@@ -344,7 +344,7 @@ func main() {
 	}))
 
 	// Marks an entry as not suspicious
-	r.Handle("/do/unflag", ActionHandler(func(email string, user UserData, query url.Values) (uint16, string) {
+	r.Handle("/do/unflag", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
 		if !user.Admin || email == "" {
 			return 403, ""
 		}
@@ -354,7 +354,7 @@ func main() {
 		return 303, "/all/flagged"
 	}))
 
-	r.Handle("/all", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/all", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		if !user.Admin {
 			return 403, "", nil
 		}
@@ -385,7 +385,7 @@ func main() {
 		}
 	}))
 
-	r.Handle("/all/flagged", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/all/flagged", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		if !user.Admin {
 			return 403, "", nil
 		}
@@ -407,7 +407,7 @@ func main() {
 		}
 	}))
 
-	r.Handle("/{email}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/{email}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		keys, entries, err := database.ListSorted(email)
 		if err != nil {
 			return 404, "", nil
@@ -421,7 +421,7 @@ func main() {
 		}
 	}))
 
-	r.Handle("/{email}/{key}", TemplateHandler(func(email string, user UserData, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/{email}/{key}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		if email == "" {
 			return 403, "", nil
 		}

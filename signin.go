@@ -12,13 +12,13 @@ import (
 )
 
 type TokenMap struct {
-	m     map[string]UserData
+	m     map[string]User
 	mutex *sync.RWMutex
 }
 
 func NewTokenMap() *TokenMap {
 	return &TokenMap{
-		m:     make(map[string]UserData),
+		m:     make(map[string]User),
 		mutex: new(sync.RWMutex),
 	}
 }
@@ -32,15 +32,15 @@ func (m *TokenMap) newToken() string {
 	return token
 }
 
-func (m *TokenMap) AddGToken(gtoken string, database *Database) (string, UserData, error) {
+func (m *TokenMap) AddGToken(gtoken string, database *Database) (string, User, error) {
 	user, err := tmUserFromGToken(gtoken, database)
 	if err != nil {
-		return "", UserData{}, err
+		return "", User{}, err
 	}
 	return m.Add(user), user, nil
 }
 
-func (m *TokenMap) Add(user UserData) string {
+func (m *TokenMap) Add(user User) string {
 	m.mutex.Lock()
 	token := m.newToken()
 	m.m[token] = user
@@ -54,22 +54,22 @@ func (m *TokenMap) Remove(token string) {
 	m.mutex.Unlock()
 }
 
-func (m *TokenMap) Get(token string) (UserData, bool) {
+func (m *TokenMap) Get(token string) (User, bool) {
 	m.mutex.RLock()
 	user, ok := m.m[token]
 	m.mutex.RUnlock()
 	return user, ok
 }
 
-func tmUserFromGToken(token string, database *Database) (UserData, error) {
+func tmUserFromGToken(token string, database *Database) (User, error) {
 	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
 	if err != nil {
-		return UserData{}, errors.New("something went wrong")
+		return User{}, errors.New("something went wrong")
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return UserData{}, errors.New("something went wrong")
+		return User{}, errors.New("something went wrong")
 	}
 
 	// The data is stored in JSON. Unmarshal the data
@@ -78,16 +78,16 @@ func tmUserFromGToken(token string, database *Database) (UserData, error) {
 
 	// If the error field is present, there is an error
 	if data["error"] != nil {
-		return UserData{}, errors.New("not signed in: " + fmt.Sprint(data["error"]))
+		return User{}, errors.New("not signed in: " + fmt.Sprint(data["error"]))
 	}
 
 	// Make sure the domain is Blind Brook (the account is from Blind Brook)
 	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
-		return UserData{}, errors.New("that account isn't associated with Blind Brook")
+		return User{}, errors.New("that account isn't associated with Blind Brook")
 	}
 	out := database.User(fmt.Sprint(data["email"]))
 
-	// Create UserData struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
+	// Create User struct if not found in map; fmt.Sprint converts things to strings (just in case it's not a string)
 	if out.Name == out.Email || out.Name == "" {
 		out.Email = fmt.Sprint(data["email"])
 		out.Name = fmt.Sprint(data["name"])

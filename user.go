@@ -12,7 +12,7 @@ const (
 
 var _ = csv.NewReader
 
-type UserData struct {
+type User struct {
 	Name  string `json:"name"`  // Name
 	Grade uint   `json:"grade"` // Graduation Year
 	Email string `json:"email"` // Email
@@ -21,7 +21,7 @@ type UserData struct {
 }
 
 // Returns the grade of the user
-func (u UserData) RealGrade() uint {
+func (u User) RealGrade() uint {
 	now := time.Now()
 	grade := uint(now.Year()) + 12 - u.Grade
 	if now.Month() >= time.September {
@@ -31,6 +31,6 @@ func (u UserData) RealGrade() uint {
 }
 
 // Returns the # of hours that the student should do
-func (u UserData) Required() uint {
+func (u User) Required() uint {
 	return (u.RealGrade() - 8) * 20
 }
