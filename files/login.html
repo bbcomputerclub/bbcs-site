@@ -106,7 +106,7 @@ function onSignIn(user) {
 			showError(null);
 			var url = "/signin?token=" + user.getAuthResponse().id_token;
 			if (location.search.length > 1) {
-				url += "&redirect=" + location.search.slice(1);
+				url += "&redirect=" + encodeURIComponent(location.search.slice(1));
 			}
 			location.href = url;
 		}
