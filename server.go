@@ -267,7 +267,8 @@ func main() {
 	r.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
 		user, ok := tokenMap.Get(getToken(r))
 		if !ok {
-			w.WriteHeader(403)
+			w.Header().Set("Refresh", "0;url=/?"+r.URL.Path)
+			w.WriteHeader(401)
 			return
 		}
 		w.Header().Set("Location", "/"+user.Email+"/add?"+r.URL.RawQuery)
