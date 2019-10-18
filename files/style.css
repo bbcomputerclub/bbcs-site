@@ -1,7 +1,7 @@
 body {
-    background: #FFF;
-    padding: 0; margin: 0;
-    font-family: 'Roboto', sans-serif;
+	background: #FFF;
+	padding: 0; margin: 0;
+	font-family: 'Roboto', sans-serif;
 }
 
 .horizontal-padding {
@@ -9,9 +9,9 @@ body {
 	padding-right: 72px; }
 
 .title {
-    padding: 16px 72px;
-    background: #26428b;
-    color: #FFF;
+	padding: 16px 72px;
+	background: #26428b;
+	color: #FFF;
 	display: flex;
 	align-items: center;
 	position:fixed;top:0;left:0;right:0;
@@ -88,80 +88,81 @@ body {
 	}
 
 main {
-    padding: 16px 72px;
+	padding: 16px 72px;
 }
 
 h1 {
-    font-size: 16px;
-    font-weight: bold;
+	font-size: 16px;
+	font-weight: bold;
 }
 
 .card {
-    padding: 16px;
-    border-radius: 2px;
-    background: #FFF;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+	padding: 16px;
+	border-radius: 2px;
+	background: #FFF;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 
-    max-width: 300px;
-    margin: auto;
-    margin-top: 10%;
+	max-width: 300px;
+	margin: auto;
+	margin-top: 10%;
 }
-    .card h1 {
-        text-align: center;
-    }
+	.card h1 {
+		text-align: center;
+	}
 
 .textfield {
-    outline: 0;
-    border: 0;
-    background: transparent;
-    padding: 8px 16px;
-    border-bottom: 2px solid #AAA;
-    font: inherit;
-    border-radius: 0;
+	outline: 0;
+	border: 0;
+	background: transparent;
+	padding: 8px 16px;
+	border-bottom: 2px solid #AAA;
+	font: inherit;
+	border-radius: 0;
 
-    display: block;
-    width: 100%;
-    width: -moz-available;
-    width: -webkit-fill-available;
-    width: fill-available;
+	display: block;
+	width: 100%;
+	width: -moz-available;
+	width: -webkit-fill-available;
+	width: fill-available;
 }
-    .textfield.dark {
-        color: #FFF;
-        border-bottom: 2px solid transparent;
-    }
-    .textfield.dark:focus {
-        color: #FFF;
-        border-bottom: 2px solid #fff;
-    }
-    .textfield:invalid {
-    	border-bottom: 2px solid #f44336;
-    	outline: 0;
-    	box-shadow: none;
-    }
-    .textfield:focus {
-        border-bottom: 2px solid #26428b;
-    }
-    textarea.textfield {
+	.textfield.dark {
+		color: #FFF;
+		border-bottom: 2px solid transparent;
+	}
+	.textfield.dark:focus {
+		color: #FFF;
+		border-bottom: 2px solid #fff;
+	}
+	.textfield:invalid {
+		border-bottom: 2px solid #f44336;
+		outline: 0;
+		box-shadow: none;
+	}
+	.textfield:focus {
+		border-bottom: 2px solid #26428b;
+	}
+	textarea.textfield {
 		resize: vertical;
-    }
+	}
  
 
 .button {
 	display: inline-block;
-    border: 4px solid transparent;
-    padding: 4px 16px;
-    background: #26428b;
-    color: #FFF;
-    outline: 0;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    text-align: center;
-    text-decoration: none;
+	font-weight: normal;
+	border: 4px solid transparent;
+	padding: 4px 16px;
+	background: #26428b;
+	color: #FFF;
+	outline: 0;
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 14px;
+	text-align: center;
+	text-decoration: none;
 }
-    .button:focus {
-        border: 4px solid #3761cc;
-    }
+	.button:focus {
+		border: 4px solid #3761cc;
+	}
 .button.light {
 	background: #3761cc; }
 	.button.light:focus {
