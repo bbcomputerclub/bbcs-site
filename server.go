@@ -48,6 +48,15 @@ var funcMap = template.FuncMap{
 		}
 		return fmt.Sprint(in) + "th"
 	},
+	"dict": func(in ...interface{}) map[string]interface{} {
+		m := make(map[string]interface{})
+		for index, arg := range in {
+			if index%2 == 1 {
+				m[in[index-1].(string)] = arg
+			}
+		}
+		return m
+	},
 }
 
 func init() {
@@ -108,6 +117,8 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(int(status))
 }
 
+var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/head.html", "files/toolbar.html"))
+
 //
 type TemplateHandler func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
 
@@ -137,7 +148,13 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	temp, err := template.New(filepath.Base(path)).Funcs(funcMap).ParseFiles(path)
+	temp, err := HEAD_TEMPLATE.Clone()
+	if err != nil {
+		log.Printf("error parsing: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	temp, err = temp.ParseFiles(path)
 	if err != nil {
 		log.Printf("error parsing %s: %s", path, err)
 		w.WriteHeader(500)
@@ -145,7 +162,7 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(int(code))
-	if err = temp.Execute(w, data); err != nil {
+	if err = temp.ExecuteTemplate(w, filepath.Base(path), data); err != nil {
 		log.Printf("error serving %s: %s", path, err)
 	}
 }

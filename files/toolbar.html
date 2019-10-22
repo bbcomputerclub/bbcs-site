@@ -1,0 +1,10 @@
+<div class="title {{if ne .Back ""}}with-icon{{end}}">
+	{{- if ne .Back ""}}
+		<a href="{{.Back}}" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
+	{{end -}}
+	<h1 style="flex-grow:1">{{.Title}}</h1>
+	<span>{{.User.Email}}</span>
+	<a href="/signout" class="button light">Sign out</a>		
+</div>
+<div class="title-spacer"></div>
+

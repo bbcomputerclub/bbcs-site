@@ -2,23 +2,7 @@
 <html lang="en">
 	<head>
 		<title>{{.Student.Name}}'s hours</title>
-		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
-		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
-		<link rel="apple-touch-icon" href="/icons/192.png">
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-		
-		<meta name="generator" content="Micro: a terminal-based plain text editor">
-		<meta name="description" content="Enter your community service hours">
-		<meta name="application-name" content="BBCS">
-
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		 
-		<link rel="stylesheet" href="/style.css">
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-		<meta name="theme-color" content="#26428b">
-		<link rel="manifest" href="/manifest.json">
-
+		{{template "head.html"}}
 		<style>
 @media print {
 	#add {
@@ -30,15 +14,11 @@
 }
 		</style>
 	<body>
-		<div class="title {{if .User.Admin}}with-icon{{end}}">
-			{{- if .User.Admin}}
-				<a href="/all" class="material-icons icon" aria-label="Back">&#xe5c4;</a>
-			{{end -}}
-			<h1 style="flex-grow:1">{{.Student.Name}}'s <span class="hide-med">community service</span> hours</h1>
-			<span>{{.User.Email}}</span>
-			<a href="/signout" class="button light">Sign out</a>		
-		</div>
-		<div class="title-spacer"></div>
+		{{if .User.Admin}}
+			{{template "toolbar.html" dict "Back" "/all" "Title" (printf "%s's hours" .Student.Name) "User" .User}}
+		{{else}}
+			{{template "toolbar.html" dict "Back" "" "Title" (printf "%s's hours" .Student.Name) "User" .User}}
+		{{end}}
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
 			<span style="float:right" {{- if lt .Entries.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.RealGrade}} grade">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>

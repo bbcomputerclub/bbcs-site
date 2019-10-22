@@ -2,23 +2,7 @@
 <html lang="en">
 	<head>
 		<title>Admin Dashboard</title>
-		<link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
-		<link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
-		<link rel="apple-touch-icon" href="/icons/192.png">
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-
-		<meta name="generator" content="Micro: a terminal-based plain text editor">
-		<meta name="description" content="Enter your community service hours">
-		<meta name="application-name" content="BBCS">
-
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black">
-		 
-		<link rel="stylesheet" href="/style.css">
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-		<meta name="theme-color" content="#26428b">
-		<link rel="manifest" href="/manifest.json">
-
+		{{template "head.html"}}
 		<style>
 #roster {
 	display: flex;
@@ -70,12 +54,7 @@ h3 {
 		</style>
 	</head>
 	<body>
-		<div class="title">
-			<h1 style="flex-grow:1">Admin Dashboard</h1>
-			<span>{{.User.Email}}</span>
-			<a href="/signout" class="button light">Sign out</a>		
-		</div>
-		<div class="title-spacer"></div>
+		{{template "toolbar.html" dict "Back" "" "Title" "Admin Dashboard" "User" .User}}
 		<a class="button strong" id="flagged" href="/all/flagged">View Suspicious Entries</a>
 		<div id="roster">
 			{{- $global := .}}
