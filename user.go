@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-const (
-	StudentListPath = "./data/students.csv"
-	AdminListPath   = "./data/admins.txt"
-)
-
 var _ = csv.NewReader
 
 type User struct {

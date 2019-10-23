@@ -335,25 +335,14 @@ func main() {
 	}))
 
 	// POST /do/delete
-	// Removes an entry
+	// Removes an entry. Only available for Admin users.
 	r.Handle("/do/delete", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
-		if email == "" {
-			return 403, ""
-		}
-
-		// Get entry
-		key := query.Get("entry")
-		entry, err := database.Get(email, key)
-		if err != nil {
-			return 403, ""
-		}
-
-		// Make sure existing entry is editable
-		if !user.Admin && !entry.Editable() {
+		if !user.Admin || email == "" {
 			return 403, ""
 		}
 
 		// Make changes
+		key := query.Get("entry")
 		database.Remove(email, key)
 
 		// Redirect
@@ -361,7 +350,7 @@ func main() {
 	}))
 
 	// POST /do/unflag
-	// Marks an entry as not suspicious.
+	// Marks an entry as not suspicious. Only available for Admin users. In fact, non-Admin users can't even view the Flagged field.
 	r.Handle("/do/unflag", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
 		if !user.Admin || email == "" {
 			return 403, ""
