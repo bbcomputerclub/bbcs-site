@@ -1,16 +1,17 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
+	"math/big"
 	"net/http"
-	"strconv"
 	"sync"
 )
 
+// Type TokenMap represents a token map.
 type TokenMap struct {
 	m     map[string]User
 	mutex *sync.RWMutex
@@ -25,7 +26,11 @@ func NewTokenMap() *TokenMap {
 
 // Doesn't lock
 func (m *TokenMap) newToken() string {
-	token := strconv.FormatInt(rand.Int63(), 36)
+	num, err := rand.Int(rand.Reader, new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil))
+	if err != nil {
+		return m.newToken()
+	}
+	token := num.Text(36)
 	if _, ok := m.m[token]; ok {
 		return m.newToken()
 	}
@@ -61,6 +66,7 @@ func (m *TokenMap) Get(token string) (User, bool) {
 	return user, ok
 }
 
+// Takes in a Google Token and returns a User.
 func tmUserFromGToken(token string, database *Database) (User, error) {
 	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
