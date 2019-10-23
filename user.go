@@ -17,10 +17,10 @@ type User struct {
 	Grade uint   `json:"grade"` // Graduation Year
 	Email string `json:"email"` // Email
 	Late  uint   `json:"late"`  // Years Late
-	Admin bool   `json:"admin"`
+	Admin bool   `json:"admin"` // User type: true for admin, false for student
 }
 
-// Returns the grade of the user
+// Method RealGrade returns the grade of the user
 func (u User) RealGrade() uint {
 	now := time.Now()
 	grade := uint(now.Year()) + 12 - u.Grade
@@ -30,7 +30,7 @@ func (u User) RealGrade() uint {
 	return grade
 }
 
-// Returns the # of hours that the student should do
+// Method Required returns the # of hours that the student should do
 func (u User) Required() uint {
 	return (u.RealGrade() - 8) * 20
 }

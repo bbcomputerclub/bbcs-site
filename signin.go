@@ -24,7 +24,7 @@ func NewTokenMap() *TokenMap {
 	}
 }
 
-// Doesn't lock
+// doesn't lock
 func (m *TokenMap) newToken() string {
 	num, err := rand.Int(rand.Reader, new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil))
 	if err != nil {
@@ -37,6 +37,7 @@ func (m *TokenMap) newToken() string {
 	return token
 }
 
+// Method AddGToken generates a new token from a Google token.
 func (m *TokenMap) AddGToken(gtoken string, database *Database) (string, User, error) {
 	user, err := tmUserFromGToken(gtoken, database)
 	if err != nil {
@@ -53,6 +54,7 @@ func (m *TokenMap) Add(user User) string {
 	return token
 }
 
+// Method Remove removes a token from the TokenMap.
 func (m *TokenMap) Remove(token string) {
 	m.mutex.Lock()
 	delete(m.m, token)
@@ -66,7 +68,7 @@ func (m *TokenMap) Get(token string) (User, bool) {
 	return user, ok
 }
 
-// Takes in a Google Token and returns a User.
+// takes in a Google Token and returns a User.
 func tmUserFromGToken(token string, database *Database) (User, error) {
 	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
