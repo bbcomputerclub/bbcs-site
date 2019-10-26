@@ -50,10 +50,10 @@
 				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
 
-				{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View") "Attr" "name"}}
+				{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View")}}
 
 				{{if ne .Action "Add"}}
-				<div style="margin-top:8px" id="lastmodified"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>
+				<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small></div>
 				{{end}}
 
 				{{if ne .Action "View"}}
