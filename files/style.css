@@ -159,6 +159,7 @@ h1 {
 	font-size: 14px;
 	text-align: center;
 	text-decoration: none;
+	border-radius: 0;
 }
 	.button:focus {
 		border: 4px solid #3761cc;

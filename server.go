@@ -124,7 +124,7 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(int(status))
 }
 
-var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/head.html", "files/toolbar.html"))
+var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/fields.html", "files/head.html", "files/toolbar.html"))
 
 // Type TemplateHandler is a Handler that is used when a template is returned.
 type TemplateHandler func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
@@ -136,7 +136,7 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := User{}
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/" && r.URL.Path != "/generator" {
 		var ok bool
 		user, ok = tokenMap.Get(getToken(r))
 		if !ok {
@@ -239,9 +239,11 @@ func main() {
 		http.ServeFile(w, r, "files/qrcode.js")
 	})
 
-	r.HandleFunc("/generator", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "files/generator.html")
-	})
+	r.Handle("/generator", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		return 200, "files/generator.html", map[string]interface{}{
+			"Entry": EntryFromQuery(query),
+		}
+	}))
 
 	r.Handle("/source", http.RedirectHandler("https://github.com/bbcomputerclub/bbcs-site", 301))
 

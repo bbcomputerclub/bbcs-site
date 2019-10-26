@@ -47,22 +47,10 @@
 
 			{{template "toolbar.html" dict "Back" (printf "/%s" .Student.Email) "Title" (printf "%s Entry" .Action) "User" .User}}
 			<main>
-				<input name="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" value="{{.Entry.Name}}" required {{if eq .Action "View"}}disabled{{end}}>
-				<div class="flex flex-sm">
-					<input name="hours" class="textfield" type="number" min="1" placeholder="Hours" required value="{{.Entry.Hours}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="date" class="textfield" type="date" {{if not .User.Admin}}min="{{(time -30).Format "2006-01-02"}}"{{end}} placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" value="{{.Entry.Date.Format "2006-01-02"}}" placeholder="Date (e.g. 2018-10-31)" {{if eq .Action "View"}}disabled{{end}} />
-				</div>
 				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
-				<input name="org" class="textfield" type="text" placeholder="Service Organization" value="{{.Entry.Organization}}" required {{if eq .Action "View"}}disabled{{end}} />
 
-				<div class="flex">
-					<input name="contactname" class="textfield" type="text" placeholder="Contact Person" required value="{{.Entry.ContactName}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="contactemail" class="textfield" type="email" placeholder="Contact Email" value="{{.Entry.ContactEmail}}" {{if eq .Action "View"}}disabled{{end}} />
-					<input name="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)"{{if ne .Entry.ContactPhone 0}} value="+{{.Entry.ContactPhone}}"{{end}} pattern="[0-9\-\+ ]+" {{if eq .Action "View"}}disabled{{end}} />
-				</div>
-
-				<textarea class="textfield" placeholder="Description" name="description" {{if eq .Action "View"}}disabled{{end}}>{{.Entry.Description}}</textarea>
+				{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View") "Attr" "name"}}
 
 				{{if ne .Action "Add"}}
 				<div style="margin-top:8px" id="lastmodified"><small><b>{{.Entry.LastModified.Format "Jan 2, 2006"}}:</b> Last Modified</small></div>

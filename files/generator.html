@@ -3,18 +3,7 @@
 
 <head>
     <title>BBCS Link Generator</title>
-    <meta charset="utf8">
-    <link rel="icon" type="image/svg+xml" href="/icons/48.svg" sizes="48x48">
-    <link rel="icon" type="image/png" href="/icons/48.png" sizes="48x48">
-    <link rel="apple-touch-icon" href="/icons/192.png" />
-	<meta name="generator" content="Micro: a terminal-based plain text editor">
-    <meta name="description" content="Generate links that users can click on to add community service entries">
-    <meta name="application-name" content="BBCS Link Generator">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="stylesheet" href="/style.css">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-    <meta name="theme-color" content="#26428b">
+    {{template "head.html"}}
     <script src="/qrcode.js"></script>
     <style>
 #bottom {
@@ -63,21 +52,7 @@
     </div>
     <div class="title-spacer"></div>
     <main>
-        <input id="name" type="text" placeholder="Name (e.g. Soup Kitchen)" class="textfield" required></h1>
-        <div class="flex flex-sm">
-            <input id="hours" class="textfield" type="number" min="1" placeholder="Hours" required />
-            <input id="date" class="textfield" type="date" placeholder="yyyy-mm-dd" required pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" />
-        </div>
-        <input id="org" class="textfield" type="text" placeholder="Service Organization" required />
-
-        <div class="flex">
-            <input id="contactname" class="textfield" type="text" placeholder="Contact Person" required />
-            <input id="contactemail" class="textfield" type="email" placeholder="Contact Email" />
-            <input id="contactphone" class="textfield" type="tel" placeholder="Contact Phone (e.g. +1 914-937-3600)" pattern="[0-9\-\+ ]+" />
-        </div>
-
-		<textarea class="textfield" placeholder="Description" id="description"></textarea>
-        ​
+        {{template "fields.html" dict "Entry" .Entry "Admin" true "Disabled" false "Attr" "id"}}​
         <div id="bottom">
             <a id="out"></a>
             <div id="qrcode"></div>
