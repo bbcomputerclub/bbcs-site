@@ -14,14 +14,10 @@
 	}
 	input::-webkit-outer-spin-button,
 	input::-webkit-inner-spin-button {
-		/* display: none; <- Crashes Chrome on hover */
 		-webkit-appearance: none;
 	}
     ::-webkit-input-placeholder { /* WebKit browsers */
-        color: transparent;
-    }
-    :-moz-placeholder { /* Mozilla Firefox 4 to 18 */
-       color: transparent;
+		color: transparent;;
     }
     ::-moz-placeholder { /* Mozilla Firefox 19+ */
        color: transparent;
@@ -38,6 +34,19 @@
 		display: none;
 	}
 }
+
+input:disabled, textarea:disabled {
+	color: black;
+}
+:disabled::-webkit-input-placeholder { /* WebKit browsers */
+	color: transparent;;
+}
+:disabled::-moz-placeholder { /* Mozilla Firefox 19+ */
+	color: transparent;
+}
+:disabled:-ms-input-placeholder { /* Internet Explorer 10+ */
+       color: transparent;
+    }
 		</style>
 	</head>
 	<body>
@@ -53,9 +62,12 @@
 				{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View")}}
 
 				{{if ne .Action "Add"}}
-				<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small></div>
+				<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small>
+					<div style="float:right"><label>Editable Until:</label><small> {{(.Entry.Date.AddDate 0 0 30).Format "Jan 2, 2006"}}</small></div>
+				</div>
 				{{end}}
 
+				<!-- Buttons -->
 				{{if ne .Action "View"}}
 					<a class="button" style="margin-top:8px" href="/{{.Student.Email}}">Cancel</a>
 					<span style="float:right;margin-top:8px">

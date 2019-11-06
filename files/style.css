@@ -114,6 +114,7 @@ h1 {
 	outline: 0;
 	border: 0;
 	background: transparent;
+	color: black;
 	padding: 8px 16px;
 	border-bottom: 2px solid #AAA;
 	font: inherit;
@@ -152,12 +153,15 @@ h1 {
 
 .label, label {
 	color: #26428b;
-	padding-left: 16px;
 	font-weight: bold;
 }
 
 .label, label, small {
 	font-size: 12px;
+}
+
+.label, label, .form-margin {
+	padding-left: 16px;
 }
 
 .button {
