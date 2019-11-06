@@ -12,6 +12,11 @@
 #hours:empty::after {
 	content: "No hours yet :(";
 }
+h3 {
+	margin: 16px 0;
+	margin-bottom: 8px;
+	text-align: center;
+}
 		</style>
 	<body>
 		{{if .User.Admin}}
@@ -20,21 +25,25 @@
 			{{template "toolbar.html" dict "Back" "" "Title" (printf "%s's hours" .Student.Name) "User" .User}}
 		{{end}}
 		<main style="color:#fff;background:#aaa"><b>Total</b> 
-			<span style="float:right" {{- if lt .Entries.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.RealGrade}} grade">
+			<span style="float:right" {{- if lt .Entries.Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.GradeNow}} grade">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
 			<b>{{.Entries.Total}}</b></span></main>
 		<ul class="list linked" id="hours">
 		{{- $global := .}}
-		{{- range $id := .Keys}}
-			{{- $entry := (index $global.Entries $id)}}
-			{{- if $entry}}
-				<li><a href="/{{$global.Student.Email}}/{{$id}}">
-				{{$entry.Name}}
-				<div style="float:right">
-				<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
-				<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
-				</div>
-				</a></li>
+		{{- range $grade := .Grades}}
+			{{- $keylist := index $global.Keys $grade}}
+			<h3>{{fmtordinal $grade}}</h3>
+			{{- range $key := $keylist}}
+				{{- $entry := (index $global.Entries $key)}}
+				{{- if $entry}}
+					<li><a href="/{{$global.Student.Email}}/{{$key}}">
+					{{$entry.Name}}
+					<div style="float:right">
+					<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
+					<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+					</div>
+					</a></li>
+				{{end -}}
 			{{end -}}
 		{{end -}}
 		</ul>

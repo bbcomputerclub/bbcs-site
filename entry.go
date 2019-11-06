@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -183,4 +184,19 @@ func (l EntryList) Total() uint {
 		total += entry.Hours
 	}
 	return total
+}
+
+func (l EntryList) Keys() []string {
+	keylist := []string(nil)
+	for key, _ := range l {
+		keylist = append(keylist, key)
+	}
+
+	return keylist
+}
+
+func (l EntryList) SortKeys(keys []string) {
+	sort.Slice(keys, func(i, j int) bool {
+		return l[keys[i]].Date.After(l[keys[j]].Date)
+	})
 }

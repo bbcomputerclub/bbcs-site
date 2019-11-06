@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"google.golang.org/api/option"
 	"path"
-	"sort"
 	"strings"
 )
 
@@ -105,24 +104,6 @@ func (dab *Database) List(email string) (EntryList, error) {
 	return list, nil
 }
 
-// Method ListSorted returns a list and a slice containing the keys in the correct order.
-func (dab *Database) ListSorted(email string) ([]string, EntryList, error) {
-	list, err := dab.List(email)
-	if err != nil {
-		return nil, nil, err
-	}
-	keylist := []string(nil)
-	for key, _ := range list {
-		keylist = append(keylist, key)
-	}
-
-	sort.Slice(keylist, func(i, j int) bool {
-		return list[keylist[i]].Date.After(list[keylist[j]].Date)
-	})
-
-	return keylist, list, nil
-}
-
 // Method User returns a user.
 func (dab *Database) User(email string) User {
 	user := User{Name: email}
@@ -146,24 +127,6 @@ func (dab *Database) Users() (map[string]User, error) {
 	}
 
 	return m, err
-}
-
-// Method UsersByGrade returns a list of users, sorted by grade (0 = no grade).
-func (dab *Database) UsersByGrade() (map[uint][]User, error) {
-	m := make(map[string]User)
-	query := dab.db.NewRef("/users").OrderByKey()
-	err := query.Get(dab.ctx, &m)
-	if err != nil {
-		return nil, err
-	}
-
-	list := make(map[uint][]User)
-	for coded, user := range m {
-		user.Email = dbDecodeEmail(coded)
-		list[user.Grade] = append(list[user.Grade], user)
-	}
-
-	return list, nil
 }
 
 func (dab *Database) Flagged() (map[[2]string]*Entry, error) {

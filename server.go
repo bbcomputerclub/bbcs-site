@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -384,23 +385,31 @@ func main() {
 			return 403, "", nil
 		}
 
-		users, err := database.UsersByGrade()
+		userlist, err := database.Users()
 		if err != nil {
 			return 500, "", nil
 		}
 
 		totals := make(map[string]uint)
-		grades := make([]uint, 0, len(users))
-		for grade, users := range users {
-			grades = append(grades, grade)
-			for _, student := range users {
-				entries, err := database.List(student.Email)
-				if err != nil {
-					continue
-				}
-				totals[student.Email] = entries.Total()
+		users := make(map[uint][]User)
+		for _, user := range userlist {
+			grade := user.GradeNow()
+			users[grade] = append(users[grade], user)
+			entries, err := database.List(user.Email)
+			if err != nil {
+				continue
 			}
+			totals[user.Email] = entries.Total()
 		}
+
+		grades := make([]uint, 0, len(users))
+		for grade, _ := range users {
+			grades = append(grades, grade)
+		}
+
+		sort.Slice(grades, func(i, j int) bool {
+			return grades[i] < grades[j]
+		})
 
 		return 200, "files/admin.html", map[string]interface{}{
 			"User":     user,
@@ -437,16 +446,34 @@ func main() {
 	// GET /{email}
 	// Lists entries.
 	r.Handle("/{email}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		keys, entries, err := database.ListSorted(email)
+		entries, err := database.List(email)
 		if err != nil {
 			return 404, "", nil
 		}
+
+		keys := make(map[uint][]string)
+		grades := []uint(nil)
+
+		for key, entry := range entries {
+			grade := user.GradeAt(entry.Date)
+			keys[grade] = append(keys[grade], key)
+		}
+
+		for grade, keylist := range keys {
+			grades = append(grades, grade)
+			entries.SortKeys(keylist)
+		}
+
+		sort.Slice(grades, func(i, j int) bool {
+			return grades[i] > grades[j]
+		})
 
 		return 200, "files/list.html", map[string]interface{}{
 			"User":    user,
 			"Student": database.User(email),
 			"Entries": entries,
 			"Keys":    keys,
+			"Grades":  grades,
 		}
 	}))
 

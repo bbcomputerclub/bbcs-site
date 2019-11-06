@@ -24,6 +24,10 @@ h3 {
 @media (min-width:800px) {
 	#roster {
 		flex-direction: row;
+		justify-content: center;
+	}
+	.grade {
+		max-width: 300px;
 	}
 }
 @media (min-width:1000px) {
@@ -60,7 +64,7 @@ h3 {
 			{{- $global := .}}
 			{{range $grade := .Grades}}
 			<div class="grade">
-				<h3 class="horizontal-padding">{{$grade}}</h3>
+				<h3 class="horizontal-padding">{{fmtordinal $grade}}</h3>
 				<ul class="list linked">
 					{{range index $global.Students $grade}}
 						<li><a href="/{{.Email}}">{{.Name}}
