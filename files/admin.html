@@ -15,6 +15,12 @@ h3 {
 	margin: 16px 0;
 	text-align: center;
 }
+#flagged {
+	display: block;
+	width: 192px;
+	margin-top:16px;margin-bottom:16px;
+}
+
 @media (min-width:600px) {
 	.grade li a, .grade h3 {
 		padding-left: 32px !important;
@@ -36,12 +42,6 @@ h3 {
 		padding-right: 40px;
 	}
 }
-#flagged {
-	display: block;
-	margin: auto;
-	width: 200px;
-	margin-top:16px;margin-bottom:16px;
-}
 @media print {
 	body {
 		padding: 0 !important;
@@ -55,11 +55,22 @@ h3 {
 		display: none;
 	}
 }
+#buttons {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+#buttons :not(:last-child) {
+	margin-right: 16px;
+}
 		</style>
 	</head>
 	<body>
 		{{template "toolbar.html" dict "Back" "" "Title" "Admin Dashboard" "User" .User}}
-		<a class="button strong" id="flagged" href="/all/flagged">View Suspicious Entries</a>
+		<div id="buttons">
+			<a class="button strong" id="flagged" href="/all/flagged">View Suspicious Entries</a>
+			<a class="button" id="flagged" href="/roster">Update Roster</a>
+		</div>
 		<div id="roster">
 			{{- $global := .}}
 			{{range $grade := .Grades}}

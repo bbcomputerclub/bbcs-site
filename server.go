@@ -443,6 +443,18 @@ func main() {
 		}
 	}))
 
+	// GET /roster
+	// Serves the Update Roster page.
+	r.Handle("/roster", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		if !user.Admin {
+			return 403, "", nil
+		}
+
+		return 200, "files/roster.html", map[string]interface{}{
+			"User": user,
+		}
+	}))
+
 	// GET /{email}
 	// Lists entries.
 	r.Handle("/{email}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
