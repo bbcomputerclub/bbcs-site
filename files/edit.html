@@ -63,7 +63,7 @@ input:disabled, textarea:disabled {
 
 				{{if ne .Action "Add"}}
 				<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small>
-					<div style="float:right"><label>Editable Until:</label><small> {{(.Entry.Date.AddDate 0 0 30).Format "Jan 2, 2006"}}</small></div>
+					<div style="float:right"><label>Editable Until:</label><small> {{(.Entry.Date.AddDate 0 0 31).Format "Jan 2, 2006"}}</small></div>
 				</div>
 				{{end}}
 

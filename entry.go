@@ -57,10 +57,11 @@ func (entry *Entry) SetFlagged() {
 	}
 }
 
-// Returns whether the entry is at least 30 days old
+// Returns whether the entry is at most 30 days old
 func (entry *Entry) Editable() bool {
-	duration, _ := time.ParseDuration("1h")
-	return time.Since(entry.Date) <= duration*24*30
+	t := time.Now()
+	t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	return t.Sub(entry.Date).Hours() <= 30*24
 }
 
 func (entry *Entry) MarshalJSON() ([]byte, error) {
