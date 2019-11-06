@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Update Roster</title>
+        {{template "head.html"}}
+        <style>
+form {
+    text-align:center;
+    width: 384px;
+    background: #eee;
+    padding: 16px;
+    margin: auto;
+}
+#buttons {
+    margin-top: 16px;
+}
+        </style>
+    </head>
+    <body>
+        {{template "toolbar.html" dict "Back" "/all" "Title" "Update Roster" "User" .User}}
+        <main>
+            <p>
+                Attach a file to the form below, then click "Apply".
+                The attached file should be a <code>.csv</code> file with 4 columns:<br>
+                <span style="display:inline-block;width:4em"></span>name, graduation year, email, # of years late<br>
+                in that order.
+            </p>
+            <p>Students that are not on the <code>.csv</code> file will be removed.
+                Those students' entries will not be removed, however.</p>
+
+            <form action="/do/roster" method="POST">
+                <label for="file">CSV File</label>
+                <input type="file" required accept=".csv">
+                <div id="buttons">
+                    <button class="button strong" type="submit">Apply</button>
+                </div>
+            </form>
+        </main>
+    </body>
+</html>
