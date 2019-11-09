@@ -98,7 +98,7 @@ func getToken(r *http.Request) string {
 // the user does not have sufficient permissions, an empty string is passed as the first argument.
 //
 // The 2nd argument is the signed-in user, and the 3rd argument is the original request.
-type ActionHandler func(student string, user User, query url.Values) (uint16, string)
+type ActionHandler func(student string, user User, query url.Values, r *http.Request) (uint16, string, error)
 
 func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -118,9 +118,18 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		email = r.PostFormValue("user")
 	}
 
-	status, loc := f(email, user, r.PostForm)
-	if status >= 300 && status < 400 && loc != "" {
-		w.Header().Set("Location", loc)
+	status, loc, err := f(email, user, r.PostForm, r)
+	if err != nil {
+		w.WriteHeader(int(status))
+		io.WriteString(w, err.Error())
+		return
+	}
+	if loc != "" {
+		if status >= 300 && status < 400 {
+			w.Header().Set("Location", loc)
+		} else {
+			w.Header().Set("Refresh", "0;url="+loc)
+		}
 	}
 	w.WriteHeader(int(status))
 }
@@ -300,9 +309,9 @@ func main() {
 
 	// POST /do/update
 	// Updates an entry
-	r.Handle("/do/update", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
+	r.Handle("/do/update", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
 		if email == "" {
-			return 403, ""
+			return 403, "", fmt.Errorf("not logged in")
 		}
 
 		// Get entry
@@ -312,42 +321,42 @@ func main() {
 
 		// Make sure entry is recent
 		if (!user.Admin) && (!oldEntry.Editable() || !newEntry.Editable()) {
-			return 403, ""
+			return 403, "", fmt.Errorf("entry too old")
 		}
 
 		newEntry.SetFlagged()
 
 		database.Set(email, key, newEntry)
 
-		return 303, "/" + email
+		return 303, "/" + email, nil
 	}))
 
 	// POST /do/add
 	// Adds an entry
-	r.Handle("/do/add", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
+	r.Handle("/do/add", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
 		if email == "" {
-			return 403, ""
+			return 403, "", fmt.Errorf("not logged in")
 		}
 
 		newEntry := EntryFromQuery(query)
 
 		// Make sure entry is recent
 		if !user.Admin && !newEntry.Editable() {
-			return 403, ""
+			return 403, "", fmt.Errorf("entry too old")
 		}
 		newEntry.SetFlagged()
 
 		database.Add(email, newEntry)
 
 		// Redirect
-		return 303, "/" + email
+		return 303, "/" + email, nil
 	}))
 
 	// POST /do/delete
 	// Removes an entry. Only available for Admin users.
-	r.Handle("/do/delete", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
+	r.Handle("/do/delete", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
 		if !user.Admin || email == "" {
-			return 403, ""
+			return 403, "", fmt.Errorf("admin permissions required")
 		}
 
 		// Make changes
@@ -355,19 +364,47 @@ func main() {
 		database.Remove(email, key)
 
 		// Redirect
-		return 303, "/" + email
+		return 303, "/" + email, nil
 	}))
 
 	// POST /do/unflag
 	// Marks an entry as not suspicious. Only available for Admin users. In fact, non-Admin users can't even view the Flagged field.
-	r.Handle("/do/unflag", ActionHandler(func(email string, user User, query url.Values) (uint16, string) {
+	r.Handle("/do/unflag", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
 		if !user.Admin || email == "" {
-			return 403, ""
+			return 403, "", fmt.Errorf("admin permissions required")
 		}
 
 		key := query.Get("entry")
 		database.Flag(email, key, false)
-		return 303, "/all/flagged"
+		return 303, "/all/flagged", nil
+	}))
+
+	// POST /do/roster
+	// Updates the roster.
+	r.Handle("/do/roster", ActionHandler(func(email string, user User, query url.Values, r *http.Request) (uint16, string, error) {
+		if !user.Admin {
+			return 403, "", fmt.Errorf("admin permissions required")
+		}
+
+		file, _, err := r.FormFile("roster")
+		if err != nil {
+			log.Println(err)
+			return 500, "", fmt.Errorf("internal error")
+		}
+
+		users, err := UsersFromCSV(file)
+		if err != nil {
+			log.Println(err)
+			return 400, "", fmt.Errorf("malformed CSV file: %v", err)
+		}
+
+		err = database.SetStudents(users)
+		if err != nil {
+			log.Println(err)
+			return 500, "", fmt.Errorf("internal error")
+		}
+
+		return 303, "/all", nil
 	}))
 
 	// GET /

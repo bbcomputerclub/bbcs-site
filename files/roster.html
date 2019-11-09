@@ -28,9 +28,9 @@ form {
             <p>Students that are not on the <code>.csv</code> file will be removed.
                 Those students' entries will not be removed, however.</p>
 
-            <form action="/do/roster" method="POST">
+            <form action="/do/roster" method="POST" enctype="multipart/form-data">
                 <label for="file">CSV File</label>
-                <input type="file" required accept=".csv">
+                <input type="file" name="roster" required accept=".csv">
                 <div id="buttons">
                     <button class="button strong" type="submit">Apply</button>
                 </div>

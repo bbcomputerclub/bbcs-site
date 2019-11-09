@@ -129,6 +129,32 @@ func (dab *Database) Users() (map[string]User, error) {
 	return m, err
 }
 
+// Deletes all non-Admin users and adds all users specified in here.
+func (dab *Database) SetStudents(users []User) error {
+	usersRef := dab.db.NewRef("/users")
+	vals, err := usersRef.OrderByKey().GetOrdered(dab.ctx)
+	if err != nil {
+		return err
+	}
+	for _, node := range vals {
+		user := User{}
+		node.Unmarshal(&user)
+		if !user.Admin {
+			err = usersRef.Child(node.Key()).Delete(dab.ctx)
+		}
+	}
+	for _, user := range users {
+		userRef := usersRef.Child(dbCodeEmail(user.Email))
+
+		oldUser := User{}
+		userRef.Get(dab.ctx, &oldUser)
+		user.Admin = oldUser.Admin
+
+		err = userRef.Set(dab.ctx, user)
+	}
+	return err
+}
+
 func (dab *Database) Flagged() (map[[2]string]*Entry, error) {
 	entries := make(map[string]EntryList)
 	err := dab.db.NewRef("/entries").OrderByKey().Get(dab.ctx, &entries)
