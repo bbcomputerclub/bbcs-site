@@ -19,8 +19,9 @@
 		{{- $global := .}}
 		{{- range $id, $entry := .Entries}}
 			{{- $key := index $id 1}}
-			{{- $student := index $global.Students (index $id 0)}}
-			<li><a href="/{{$student.Email}}/{{$key}}">
+			{{- $email := index $id 0}}
+			{{- $student := index $global.Students $email}}
+			<li><a href="/{{$email}}/{{$key}}">
 				{{$entry.Name}}
 				<div style="float:right">
 					<span style="margin-right:48px">{{$student.Name}}</span>
