@@ -431,6 +431,9 @@ func main() {
 		users := make(map[uint][]User)
 		for _, user := range userlist {
 			grade := user.GradeNow()
+			if user.Grade == 0 || grade < 9 || grade > 12 {
+				continue
+			}
 			users[grade] = append(users[grade], user)
 			entries, err := database.List(user.Email)
 			if err != nil {
@@ -440,8 +443,11 @@ func main() {
 		}
 
 		grades := make([]uint, 0, len(users))
-		for grade, _ := range users {
+		for grade, studentlist := range users {
 			grades = append(grades, grade)
+			sort.Slice(studentlist, func(i, j int) bool {
+				return studentlist[i].Name < studentlist[j].Name
+			})
 		}
 
 		sort.Slice(grades, func(i, j int) bool {
