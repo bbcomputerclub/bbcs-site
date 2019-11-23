@@ -35,7 +35,7 @@ func (u User) GradeAt(t time.Time) uint {
 
 // Method Required returns the # of hours that the student should do
 func (u User) Required() uint {
-	return (u.GradeNow() - 8) * 20
+	return (u.GradeNow() - 8 - u.Late) * 20
 }
 
 func UsersFromCSV(r io.Reader) ([]User, error) {
