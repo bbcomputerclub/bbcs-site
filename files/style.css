@@ -16,6 +16,7 @@ body {
 	align-items: center;
 	position:fixed;top:0;left:0;right:0;
 	line-height: 24px; /* 56 (height) - 16*2 (padding) */
+	white-space: nowrap;
 }
 	.title > a, .title > span {
 		color: #FFF;
@@ -28,10 +29,14 @@ body {
 		padding: 0 8px;
 		margin-top: -8px;		
 		margin-bottom: -8px;
-		margin-left: 8px;
+	}
+	.title #signout-form {
+		margin-left: 16px;
 	}
 	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
 		margin: 0;
+		overflow: auto;
+		margin-right: 8px;
 	}
 	.title .textfield {
 		padding: 0;

@@ -4,7 +4,7 @@
 	{{end -}}
 	<h1 style="flex-grow:1">{{.Title}}</h1>
 	<span>{{.User.Email}}</span>
-	<form action="/signout" method="POST">
+	<form action="/signout" method="POST" id="signout-form">
 		<button type="submit" class="button light">Sign out</button>
 	</form>
 </div>
