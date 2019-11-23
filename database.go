@@ -12,6 +12,7 @@ import (
 	"firebase.google.com/go/db"
 	"fmt"
 	"google.golang.org/api/option"
+	"log"
 	"path"
 	"strings"
 )
@@ -51,6 +52,19 @@ func NewDatabase(configFile string, databaseURL string) (*Database, error) {
 	}, nil
 }
 
+func (dab *Database) addTotal(email string, change int) error {
+	return dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child("total").Transaction(dab.ctx, db.UpdateFn(func(node db.TransactionNode) (interface{}, error) {
+		total := 0
+		err := node.Unmarshal(&total)
+		if err != nil {
+			log.Printf("error retrieving total transaction: %v", err)
+		}
+
+		total += change
+		return total, err
+	}))
+}
+
 // Method Get returns the entry if it does exist and and error otherwise
 func (dab *Database) Get(email string, key string) (*Entry, error) {
 	entry := new(Entry)
@@ -70,16 +84,31 @@ func (dab *Database) Add(email string, entry *Entry) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return path.Base(ref.Path), nil
+
+	err = dab.addTotal(email, int(entry.Hours))
+	return path.Base(ref.Path), err
 }
 
 // Method Set updates an entry.
 func (dab *Database) Set(email string, key string, entry *Entry) error {
 	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
-	return ref.Set(dab.ctx, entry)
+
+	var hoursdiff int
+	err := ref.Child("hours").Get(dab.ctx, &hoursdiff)
+	if err != nil {
+		return err
+	}
+	hoursdiff = int(entry.Hours) - hoursdiff
+
+	err = ref.Set(dab.ctx, entry)
+	if err != nil {
+		return err
+	}
+
+	return dab.addTotal(email, hoursdiff)
 }
 
-// Method Flag flags or unfalgs an entry.
+// Method Flag flags or unflags an entry.
 func (dab *Database) Flag(email string, key string, flag bool) error {
 	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
 	return ref.Update(dab.ctx, map[string]interface{}{
@@ -90,7 +119,19 @@ func (dab *Database) Flag(email string, key string, flag bool) error {
 // Method Remove removes an entry.
 func (dab *Database) Remove(email string, key string) error {
 	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
-	return ref.Delete(dab.ctx)
+
+	var hours int
+	err := ref.Child("hours").Get(dab.ctx, &hours)
+	if err != nil {
+		return err
+	}
+
+	err = ref.Delete(dab.ctx)
+	if err != nil {
+		return err
+	}
+
+	return dab.addTotal(email, -hours)
 }
 
 // Method List returns a list of a person's entries.
@@ -101,7 +142,20 @@ func (dab *Database) List(email string) (EntryList, error) {
 	if err != nil {
 		return nil, err
 	}
+	delete(list, "total")
 	return list, nil
+}
+
+// Method Total returns the total number of hours that a person has done.
+func (dab *Database) Total(email string) uint {
+	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child("total")
+
+	total := uint(0)
+	err := ref.Get(dab.ctx, &total)
+	if err != nil {
+		log.Printf("error retrieving total: %v\n", err)
+	}
+	return total
 }
 
 // Method User returns a user.

@@ -50,11 +50,11 @@ input:disabled, textarea:disabled {
 		</style>
 	</head>
 	<body>
+		{{template "toolbar.html" dict "Back" (printf "/%s" .Student.Email) "Title" (printf "%s Entry" .Action) "User" .User}}
+
 		{{if ne .Action "View"}}
 		<form action="{{if eq .Action "Edit"}}/do/update{{else}}/do/add{{end}}" method="POST">
 		{{end}}
-
-			{{template "toolbar.html" dict "Back" (printf "/%s" .Student.Email) "Title" (printf "%s Entry" .Action) "User" .User}}
 			<main>
 				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">

@@ -485,24 +485,22 @@ func main() {
 				continue
 			}
 			users[grade] = append(users[grade], user)
-			entries, err := database.List(user.Email)
-			if err != nil {
-				continue
-			}
-			totals[user.Email] = entries.Total()
+
+			totals[user.Email] = database.Total(user.Email)
 		}
 
 		grades := make([]uint, 0, len(users))
-		for grade, studentlist := range users {
+		for grade := uint(9); grade <= 12; grade++ {
+			studentlist, ok := users[grade]
+			if !ok {
+				continue
+			}
+
 			grades = append(grades, grade)
 			sort.Slice(studentlist, func(i, j int) bool {
 				return studentlist[i].Name < studentlist[j].Name
 			})
 		}
-
-		sort.Slice(grades, func(i, j int) bool {
-			return grades[i] < grades[j]
-		})
 
 		return 200, "files/admin.html", map[string]interface{}{
 			"User":     user,
@@ -575,6 +573,7 @@ func main() {
 			"Entries": entries,
 			"Keys":    keys,
 			"Grades":  grades,
+			"Total":   database.Total(student),
 		}
 	}))
 
