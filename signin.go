@@ -38,8 +38,8 @@ func (m *TokenMap) newToken() string {
 }
 
 // Method AddGToken generates a new token from a Google token.
-func (m *TokenMap) AddGToken(gtoken string, database *Database) (string, User, error) {
-	user, err := tmUserFromGToken(gtoken, database)
+func (m *TokenMap) AddGToken(gtoken string, database *Database, domain string) (string, User, error) {
+	user, err := tmUserFromGToken(gtoken, database, domain)
 	if err != nil {
 		return "", User{}, err
 	}
@@ -69,7 +69,7 @@ func (m *TokenMap) Get(token string) (User, bool) {
 }
 
 // takes in a Google Token and returns a User.
-func tmUserFromGToken(token string, database *Database) (User, error) {
+func tmUserFromGToken(token string, database *Database, domain string) (User, error) {
 	// Next 8 lines: Retrieves data from Google servers
 	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token)
 	if err != nil {
@@ -90,7 +90,7 @@ func tmUserFromGToken(token string, database *Database) (User, error) {
 	}
 
 	// Make sure the domain is Blind Brook (the account is from Blind Brook)
-	if fmt.Sprint(data["hd"]) != "blindbrook.org" {
+	if fmt.Sprint(data["hd"]) != domain {
 		return User{}, errors.New("that account isn't associated with Blind Brook")
 	}
 	out := database.User(fmt.Sprint(data["email"]))

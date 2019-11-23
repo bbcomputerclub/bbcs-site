@@ -80,10 +80,12 @@ function showError(msg) {
 }
 
 function onSignIn(user) {
+	const domain = {{.Domain}};
+
 	if (location.hash !== "#signout") {
 		var profile = user.getBasicProfile();
-		if (!profile.getEmail().endsWith("@blindbrook.org")) {
-			showError(profile.getEmail() + " is not associated with Blind Brook. Try signing in with a different account.");
+		if (!profile.getEmail().endsWith("@" + domain)) {
+			showError(profile.getEmail() + " is not associated with " + domain + ". Try signing in with a different account.");
 			signOut();
 		} else {
 			showError(null);
