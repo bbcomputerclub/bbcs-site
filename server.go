@@ -96,33 +96,57 @@ func getToken(r *http.Request) string {
 	return ""
 }
 
-// Type ActionHandler represents a POST request handler.
+// Alias ActionHandlerFunc is used for ActionHandler.
 //
 // Passes the student's email as the first argument. If the user is not authenticated or
 // the user does not have sufficient permissions, an empty string is passed as the first argument.
 //
 // The 2nd argument is the signed-in user, and the 3rd argument is the original request.
-type ActionHandler func(student string, user User, query url.Values, r *http.Request) (uint16, string, error)
+type ActionHandlerFunc = func(student string, user User, query url.Values, w http.ResponseWriter, r *http.Request) (uint16, string, error)
 
-func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// Type ActionHandler represents a POST request handler.
+type ActionHandler struct {
+	Func         ActionHandlerFunc
+	RequireAuth  bool
+	RequireAdmin bool
+}
+
+func NewActionHandler(reqAuth, reqAdmin bool, f ActionHandlerFunc) ActionHandler {
+	return ActionHandler{
+		Func:         f,
+		RequireAuth:  reqAuth,
+		RequireAdmin: reqAdmin,
+	}
+}
+
+func (h ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.Header().Set("Allow", "POST")
 		w.WriteHeader(405)
 		return
 	}
 
-	user, ok := tokenMap.Get(getToken(r))
-	if !ok {
-		w.Header().Set("Refresh", "0;url=/")
-		w.WriteHeader(401)
-		return
-	}
-	email := ""
-	if user.Admin || r.PostFormValue("user") == user.Email {
-		email = r.PostFormValue("user")
+	user := User{}
+	student := ""
+	if h.RequireAuth {
+		var ok bool
+		user, ok = tokenMap.Get(getToken(r))
+		if !ok {
+			w.WriteHeader(401)
+			return
+		}
+
+		if user.Admin || r.PostFormValue("user") == user.Email {
+			student = r.PostFormValue("user")
+		}
 	}
 
-	status, loc, err := f(email, user, r.PostForm, r)
+	if h.RequireAdmin && !user.Admin {
+		w.WriteHeader(403)
+		return
+	}
+
+	status, loc, err := h.Func(student, user, r.PostForm, w, r)
 	if err != nil {
 		w.WriteHeader(int(status))
 		io.WriteString(w, err.Error())
@@ -140,6 +164,9 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/fields.html", "files/head.html", "files/toolbar.html"))
 
+// Alias TemplateHandlerFunc represents a handler function for pages.
+//
+// The 1st argument is the student, 2nd is the logged-in user, 3rd is the GET query, 4th is mux.Vars.
 type TemplateHandlerFunc = func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
 
 // Type TemplateHandler is a Handler that is used when a template is returned.
@@ -311,14 +338,14 @@ func main() {
 	})
 
 	// TODO: This should be POST
-	r.HandleFunc("/signout", func(w http.ResponseWriter, r *http.Request) {
+	r.Handle("/signout", NewActionHandler(false, false, func(student string, user User, query url.Values, w http.ResponseWriter, r *http.Request) (uint16, string, error) {
 		token := getToken(r)
 		tokenMap.Remove(token)
 
 		http.SetCookie(w, &http.Cookie{Name: "BBCS_SESSION_ID", Value: "", MaxAge: -1})
-		w.Header().Set("Location", "/#signout")
-		w.WriteHeader(303)
-	})
+
+		return 303, "/#signout", nil
+	}))
 
 	// GET /add
 	// Redirects to /{email}/add
@@ -335,7 +362,7 @@ func main() {
 
 	// POST /do/update
 	// Updates an entry
-	r.Handle("/do/update", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
+	r.Handle("/do/update", NewActionHandler(true, false, func(email string, user User, query url.Values, _ http.ResponseWriter, _ *http.Request) (uint16, string, error) {
 		if email == "" {
 			return 403, "", fmt.Errorf("not logged in")
 		}
@@ -359,8 +386,8 @@ func main() {
 
 	// POST /do/add
 	// Adds an entry
-	r.Handle("/do/add", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
-		if email == "" {
+	r.Handle("/do/add", NewActionHandler(true, false, func(student string, user User, query url.Values, _ http.ResponseWriter, _ *http.Request) (uint16, string, error) {
+		if student == "" {
 			return 403, "", fmt.Errorf("not logged in")
 		}
 
@@ -372,42 +399,42 @@ func main() {
 		}
 		newEntry.SetFlagged()
 
-		database.Add(email, newEntry)
+		database.Add(student, newEntry)
 
 		// Redirect
-		return 303, "/" + email, nil
+		return 303, "/" + student, nil
 	}))
 
 	// POST /do/delete
 	// Removes an entry. Only available for Admin users.
-	r.Handle("/do/delete", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
-		if !user.Admin || email == "" {
-			return 403, "", fmt.Errorf("admin permissions required")
+	r.Handle("/do/delete", NewActionHandler(true, true, func(student string, user User, query url.Values, _ http.ResponseWriter, _ *http.Request) (uint16, string, error) {
+		if student == "" {
+			return 403, "", fmt.Errorf("not logged in")
 		}
 
 		// Make changes
 		key := query.Get("entry")
-		database.Remove(email, key)
+		database.Remove(student, key)
 
 		// Redirect
-		return 303, "/" + email, nil
+		return 303, "/" + student, nil
 	}))
 
 	// POST /do/unflag
 	// Marks an entry as not suspicious. Only available for Admin users. In fact, non-Admin users can't even view the Flagged field.
-	r.Handle("/do/unflag", ActionHandler(func(email string, user User, query url.Values, _ *http.Request) (uint16, string, error) {
-		if !user.Admin || email == "" {
-			return 403, "", fmt.Errorf("admin permissions required")
+	r.Handle("/do/unflag", NewActionHandler(true, true, func(student string, user User, query url.Values, _ http.ResponseWriter, _ *http.Request) (uint16, string, error) {
+		if student == "" {
+			return 403, "", fmt.Errorf("no student specified")
 		}
 
 		key := query.Get("entry")
-		database.Flag(email, key, false)
+		database.Flag(student, key, false)
 		return 303, "/all/flagged", nil
 	}))
 
 	// POST /do/roster
 	// Updates the roster.
-	r.Handle("/do/roster", ActionHandler(func(email string, user User, query url.Values, r *http.Request) (uint16, string, error) {
+	r.Handle("/do/roster", NewActionHandler(true, true, func(email string, user User, query url.Values, _ http.ResponseWriter, r *http.Request) (uint16, string, error) {
 		if !user.Admin {
 			return 403, "", fmt.Errorf("admin permissions required")
 		}

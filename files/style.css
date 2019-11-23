@@ -20,7 +20,6 @@ body {
 	.title > a, .title > span {
 		color: #FFF;
 		text-decoration: none;
-		margin-left: 8px;
 	}
 	.title a:hover:not(.button) {
 		border-bottom: 2px solid;
@@ -29,6 +28,7 @@ body {
 		padding: 0 8px;
 		margin-top: -8px;		
 		margin-bottom: -8px;
+		margin-left: 8px;
 	}
 	.title h1, .title h2, .title h3, .title h4, .title h5, .title h6 {
 		margin: 0;
