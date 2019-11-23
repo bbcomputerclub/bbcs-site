@@ -136,17 +136,33 @@ func (f ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/fields.html", "files/head.html", "files/toolbar.html"))
 
-// Type TemplateHandler is a Handler that is used when a template is returned.
-type TemplateHandler func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
+type TemplateHandlerFunc = func(student string, user User, query url.Values, vars map[string]string) (code uint16, path string, data interface{})
 
-func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// Type TemplateHandler is a Handler that is used when a template is returned.
+type TemplateHandler struct {
+	Func         TemplateHandlerFunc
+	RequireAuth  bool
+	RequireAdmin bool
+}
+
+func NewTemplateHandler(reqAuth bool, reqAdmin bool, fn TemplateHandlerFunc) TemplateHandler {
+	return TemplateHandler{
+		Func:         fn,
+		RequireAuth:  reqAuth,
+		RequireAdmin: reqAdmin,
+	}
+}
+
+func (h TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(405)
+		return
 	}
 
+	// Authentication
 	user := User{}
-	if r.URL.Path != "/" && r.URL.Path != "/generator" {
+	if h.RequireAuth {
 		var ok bool
 		user, ok = tokenMap.Get(getToken(r))
 		if !ok {
@@ -156,13 +172,19 @@ func (f TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	vars := mux.Vars(r)
-	email := ""
-	if user.Admin || user.Email == vars["email"] {
-		email = vars["email"]
+	// Check for Admin-ness
+	if h.RequireAdmin && !user.Admin {
+		w.WriteHeader(403)
+		return
 	}
 
-	code, path, data := f(email, user, r.URL.Query(), vars)
+	vars := mux.Vars(r)
+	student := ""
+	if user.Admin || user.Email == vars["email"] {
+		student = vars["email"]
+	}
+
+	code, path, data := h.Func(student, user, r.URL.Query(), vars)
 
 	if code < 200 || code >= 300 {
 		w.WriteHeader(int(code))
@@ -249,7 +271,7 @@ func main() {
 		http.ServeFile(w, r, "files/qrcode.js")
 	})
 
-	r.Handle("/generator", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/generator", NewTemplateHandler(false, false, func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		return 200, "files/generator.html", map[string]interface{}{
 			"Entry": EntryFromQuery(query),
 		}
@@ -409,7 +431,7 @@ func main() {
 
 	// GET /
 	// Serves login page if user isn't logged in.
-	r.Handle("/", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+	r.Handle("/", NewTemplateHandler(false, false, func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		return 200, "files/login.html", map[string]interface{}{
 			"ClientID": CLIENT_ID,
 		}
@@ -417,11 +439,7 @@ func main() {
 
 	// GET /all
 	// Serves the Admin Dashboard.
-	r.Handle("/all", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		if !user.Admin {
-			return 403, "", nil
-		}
-
+	r.Handle("/all", NewTemplateHandler(true, true, func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		userlist, err := database.Users()
 		if err != nil {
 			return 500, "", nil
@@ -464,11 +482,7 @@ func main() {
 
 	// GET /all/flagged
 	// Serves the Suspicious Entry list.
-	r.Handle("/all/flagged", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		if !user.Admin {
-			return 403, "", nil
-		}
-
+	r.Handle("/all/flagged", NewTemplateHandler(true, true, func(student string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		flagged, err := database.Flagged()
 		if err != nil {
 			return 500, "", nil
@@ -488,11 +502,7 @@ func main() {
 
 	// GET /roster
 	// Serves the Update Roster page.
-	r.Handle("/roster", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		if !user.Admin {
-			return 403, "", nil
-		}
-
+	r.Handle("/roster", NewTemplateHandler(true, true, func(student string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		return 200, "files/roster.html", map[string]interface{}{
 			"User": user,
 		}
@@ -500,8 +510,8 @@ func main() {
 
 	// GET /{email}
 	// Lists entries.
-	r.Handle("/{email}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		entries, err := database.List(email)
+	r.Handle("/{email}", NewTemplateHandler(true, false, func(student string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		entries, err := database.List(student)
 		if err != nil {
 			return 404, "", nil
 		}
@@ -525,7 +535,7 @@ func main() {
 
 		return 200, "files/list.html", map[string]interface{}{
 			"User":    user,
-			"Student": database.User(email),
+			"Student": database.User(student),
 			"Entries": entries,
 			"Keys":    keys,
 			"Grades":  grades,
@@ -534,8 +544,8 @@ func main() {
 
 	// GET /{email}/{key}
 	// Views, edits, or adds a specific entry.
-	r.Handle("/{email}/{key}", TemplateHandler(func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
-		if email == "" {
+	r.Handle("/{email}/{key}", NewTemplateHandler(true, false, func(student string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
+		if student == "" {
 			return 403, "", nil
 		}
 
@@ -546,7 +556,7 @@ func main() {
 			entry = EntryFromQuery(query)
 		} else {
 			var err error
-			entry, err = database.Get(email, key)
+			entry, err = database.Get(student, key)
 			if err != nil {
 				return 404, "", nil
 			}
@@ -564,7 +574,7 @@ func main() {
 
 		return 200, "files/edit.html", map[string]interface{}{
 			"User":    user,
-			"Student": database.User(email),
+			"Student": database.User(student),
 			"Entry":   entry,
 			"Key":     key,
 			"Action":  action,
