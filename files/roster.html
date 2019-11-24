@@ -4,7 +4,7 @@
 		<title>Update Roster</title>
         {{template "head.html"}}
         <style>
-form {
+#csv-form {
     text-align:center;
     width: 384px;
     background: #eee;
@@ -28,7 +28,7 @@ form {
             <p>Students that are not on the <code>.csv</code> file will be removed.
                 Those students' entries will not be removed, however.</p>
 
-            <form action="/do/roster" method="POST" enctype="multipart/form-data">
+            <form id="csv-form" action="/do/roster" method="POST" enctype="multipart/form-data">
                 <label for="file">CSV File</label>
                 <input type="file" name="roster" required accept=".csv">
                 <div id="buttons">

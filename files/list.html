@@ -19,6 +19,24 @@ h3 {
 }
 		</style>
 	<body>
+		{{- $global := .}}
+
+		{{define "LIST" -}}
+			{{- $global := .Global}}
+			{{- range $key := .Keys}}
+				{{- $entry := (index $global.Entries $key)}}
+				{{- if $entry}}
+					<li><a href="/{{$global.Student.Email}}/{{$key}}">
+						{{$entry.Name}}
+						<div style="float:right">
+						<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
+						<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+						</div>
+					</a></li>
+				{{end -}}
+			{{end -}}
+		{{end}}
+
 		{{if .User.Admin}}
 			{{template "toolbar.html" dict "Back" "/all" "Title" (printf "%s's hours" .Student.Name) "User" .User}}
 		{{else}}
@@ -28,24 +46,17 @@ h3 {
 			<span style="float:right" {{- if lt .Total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.GradeNow}} grade">
 			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
 			<b>{{.Total}}</b></span></main>
-		<ul class="list linked" id="hours">
-		{{- $global := .}}
-		{{- range $grade := .Grades}}
-			{{- $keylist := index $global.Keys $grade}}
-			<h3>{{fmtordinal $grade}}</h3>
-			{{- range $key := $keylist}}
-				{{- $entry := (index $global.Entries $key)}}
-				{{- if $entry}}
-					<li><a href="/{{$global.Student.Email}}/{{$key}}">
-					{{$entry.Name}}
-					<div style="float:right">
-					<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
-					<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
-					</div>
-					</a></li>
-				{{end -}}
+		<ul class="list linked" id="hours">		
+		{{- if ne .Student.Grade 0}}
+			{{- range $grade := .Grades}}
+				{{- $keylist := index $global.Keys $grade}}
+				<li><h3>{{fmtordinal $grade}}</h3></li>
+				{{- template "LIST" dict "Keys" $keylist "Global" $global}}
 			{{end -}}
-		{{end -}}
+		{{- else -}}
+			{{- $keylist := index $global.Keys 0}}
+			{{- template "LIST" dict "Keys" $keylist "Global" $global}}
+		{{- end -}}
 		</ul>
 		<a id="add" href="/{{.Student.Email}}/add" class="button strong corner">Add</a>		
    </body>

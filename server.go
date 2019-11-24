@@ -545,31 +545,40 @@ func main() {
 			return 403, "", nil
 		}
 
+		studentInfo := database.User(student)
+
 		entries, err := database.List(student)
 		if err != nil {
 			return 404, "", nil
 		}
 
-		keys := make(map[uint][]string)
-		grades := []uint(nil)
+		var keys = make(map[uint][]string)
+		var grades []uint
 
-		for key, entry := range entries {
-			grade := user.GradeAt(entry.Date)
-			keys[grade] = append(keys[grade], key)
+		if studentInfo.Grade != 0 {
+
+			for key, entry := range entries {
+				grade := studentInfo.GradeAt(entry.Date)
+				keys[grade] = append(keys[grade], key)
+			}
+
+			for grade, keylist := range keys {
+				grades = append(grades, grade)
+				entries.SortKeys(keylist)
+			}
+
+			sort.Slice(grades, func(i, j int) bool {
+				return grades[i] > grades[j]
+			})
+		} else {
+			for key, _ := range entries {
+				keys[0] = append(keys[0], key)
+			}
 		}
-
-		for grade, keylist := range keys {
-			grades = append(grades, grade)
-			entries.SortKeys(keylist)
-		}
-
-		sort.Slice(grades, func(i, j int) bool {
-			return grades[i] > grades[j]
-		})
 
 		return 200, "files/list.html", map[string]interface{}{
 			"User":    user,
-			"Student": database.User(student),
+			"Student": studentInfo,
 			"Entries": entries,
 			"Keys":    keys,
 			"Grades":  grades,
