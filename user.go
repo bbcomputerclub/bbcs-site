@@ -26,6 +26,10 @@ func (u User) GradeNow() uint {
 
 // Method GradeAt returns what grade the user was in at a given instant
 func (u User) GradeAt(t time.Time) uint {
+	if u.Grade == 0 {
+		return 0
+	}
+
 	grade := uint(t.Year()) + 12 - u.Grade
 	if t.Month() >= time.July {
 		grade += 1

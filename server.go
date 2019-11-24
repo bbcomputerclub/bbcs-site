@@ -556,7 +556,6 @@ func main() {
 		var grades []uint
 
 		if studentInfo.Grade != 0 {
-
 			for key, entry := range entries {
 				grade := studentInfo.GradeAt(entry.Date)
 				keys[grade] = append(keys[grade], key)
