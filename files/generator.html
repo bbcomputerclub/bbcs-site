@@ -67,8 +67,7 @@
                 height: 512
             });
 
-		    var elems = document.getElementsByTagName("input");
-            elems = Array.from(elems).concat(document.getElementsByTagName("textarea"));
+		    var elems = document.getElementsByClassName("textfield");
 		    for (var i = 0; i < elems.length; i++) {
 			    elems[i].oninput = createLink;
 		    }

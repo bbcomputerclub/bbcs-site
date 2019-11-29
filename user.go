@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-var _ = csv.NewReader
-
 type User struct {
 	Name  string `json:"name"`  // Name
 	Grade uint   `json:"grade"` // Graduation Year
@@ -77,5 +75,6 @@ func UsersFromCSV(r io.Reader) ([]User, error) {
 		user.Late = uint(late)
 		out = append(out, user)
 	}
+
 	return out, nil
 }

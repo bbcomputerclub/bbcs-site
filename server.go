@@ -162,7 +162,19 @@ func (h ActionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(int(status))
 }
 
-var HEAD_TEMPLATE = template.Must(template.New("").Funcs(funcMap).ParseFiles("files/fields.html", "files/head.html", "files/toolbar.html"))
+var TEMPLATES = template.Must(template.New("").Funcs(funcMap).ParseFiles(
+	"files/admin.html",
+	//	"files/calendar.html",
+	"files/edit.html",
+	"files/fields.html",
+	"files/flagged.html",
+	"files/generator.html",
+	"files/head.html",
+	"files/list.html",
+	"files/login.html",
+	"files/roster.html",
+	"files/toolbar.html",
+))
 
 // Alias TemplateHandlerFunc represents a handler function for pages.
 //
@@ -222,21 +234,8 @@ func (h TemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	temp, err := HEAD_TEMPLATE.Clone()
-	if err != nil {
-		log.Printf("error parsing: %s", err)
-		w.WriteHeader(500)
-		return
-	}
-	temp, err = temp.ParseFiles(path)
-	if err != nil {
-		log.Printf("error parsing %s: %s", path, err)
-		w.WriteHeader(500)
-		return
-	}
-
 	w.WriteHeader(int(code))
-	if err = temp.ExecuteTemplate(w, filepath.Base(path), data); err != nil {
+	if err := TEMPLATES.ExecuteTemplate(w, filepath.Base(path), data); err != nil {
 		log.Printf("error serving %s: %s", path, err)
 	}
 }
@@ -474,6 +473,13 @@ func main() {
 	r.Handle("/all", NewTemplateHandler(true, true, func(email string, user User, query url.Values, vars map[string]string) (uint16, string, interface{}) {
 		userlist, err := database.Users()
 		if err != nil {
+			log.Println(err)
+			return 500, "", nil
+		}
+
+		entries, err := database.ListAll()
+		if err != nil {
+			log.Println(err)
 			return 500, "", nil
 		}
 
@@ -486,7 +492,7 @@ func main() {
 			}
 			users[grade] = append(users[grade], user)
 
-			totals[user.Email] = database.Total(user.Email)
+			totals[user.Email] = entries[user.Email].Total()
 		}
 
 		grades := make([]uint, 0, len(users))
@@ -581,7 +587,6 @@ func main() {
 			"Entries": entries,
 			"Keys":    keys,
 			"Grades":  grades,
-			"Total":   database.Total(student),
 		}
 	}))
 

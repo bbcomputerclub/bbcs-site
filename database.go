@@ -52,19 +52,6 @@ func NewDatabase(configFile string, databaseURL string) (*Database, error) {
 	}, nil
 }
 
-func (dab *Database) addTotal(email string, change int) error {
-	return dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child("total").Transaction(dab.ctx, db.UpdateFn(func(node db.TransactionNode) (interface{}, error) {
-		total := 0
-		err := node.Unmarshal(&total)
-		if err != nil {
-			log.Printf("error retrieving total transaction: %v", err)
-		}
-
-		total += change
-		return total, err
-	}))
-}
-
 // Method Get returns the entry if it does exist and and error otherwise
 func (dab *Database) Get(email string, key string) (*Entry, error) {
 	entry := new(Entry)
@@ -81,31 +68,13 @@ func (dab *Database) Get(email string, key string) (*Entry, error) {
 // Method Add should be self-explanatory.
 func (dab *Database) Add(email string, entry *Entry) (string, error) {
 	ref, err := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Push(dab.ctx, entry)
-	if err != nil {
-		return "", err
-	}
-
-	err = dab.addTotal(email, int(entry.Hours))
 	return path.Base(ref.Path), err
 }
 
 // Method Set updates an entry.
 func (dab *Database) Set(email string, key string, entry *Entry) error {
 	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
-
-	var hoursdiff int
-	err := ref.Child("hours").Get(dab.ctx, &hoursdiff)
-	if err != nil {
-		return err
-	}
-	hoursdiff = int(entry.Hours) - hoursdiff
-
-	err = ref.Set(dab.ctx, entry)
-	if err != nil {
-		return err
-	}
-
-	return dab.addTotal(email, hoursdiff)
+	return ref.Set(dab.ctx, entry)
 }
 
 // Method Flag flags or unflags an entry.
@@ -119,19 +88,7 @@ func (dab *Database) Flag(email string, key string, flag bool) error {
 // Method Remove removes an entry.
 func (dab *Database) Remove(email string, key string) error {
 	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child(key)
-
-	var hours int
-	err := ref.Child("hours").Get(dab.ctx, &hours)
-	if err != nil {
-		return err
-	}
-
-	err = ref.Delete(dab.ctx)
-	if err != nil {
-		return err
-	}
-
-	return dab.addTotal(email, -hours)
+	return ref.Delete(dab.ctx)
 }
 
 // Method List returns a list of a person's entries.
@@ -142,20 +99,23 @@ func (dab *Database) List(email string) (EntryList, error) {
 	if err != nil {
 		return nil, err
 	}
-	delete(list, "total")
 	return list, nil
 }
 
-// Method Total returns the total number of hours that a person has done.
-func (dab *Database) Total(email string) uint {
-	ref := dab.db.NewRef("/entries").Child(dbCodeEmail(email)).Child("total")
-
-	total := uint(0)
-	err := ref.Get(dab.ctx, &total)
+func (dab *Database) ListAll() (map[string]EntryList, error) {
+	out := make(map[string]EntryList)
+	query := dab.db.NewRef("/entries").OrderByKey()
+	err := query.Get(dab.ctx, &out)
 	if err != nil {
-		log.Printf("error retrieving total: %v\n", err)
+		return nil, err
 	}
-	return total
+
+	for codedEmail, list := range out {
+		out[dbDecodeEmail(codedEmail)] = list
+		delete(out, codedEmail)
+	}
+
+	return out, nil
 }
 
 // Method User returns a user.
@@ -170,9 +130,6 @@ func (dab *Database) Users() (map[string]User, error) {
 	m := make(map[string]User)
 	query := dab.db.NewRef("/users").OrderByKey()
 	err := query.Get(dab.ctx, &m)
-	if err != nil {
-		return nil, err
-	}
 
 	for email, user := range m {
 		delete(m, email)
@@ -186,27 +143,32 @@ func (dab *Database) Users() (map[string]User, error) {
 // Deletes all non-Admin users and adds all users specified in here.
 func (dab *Database) SetStudents(users []User) error {
 	usersRef := dab.db.NewRef("/users")
-	vals, err := usersRef.OrderByKey().GetOrdered(dab.ctx)
-	if err != nil {
-		return err
-	}
-	for _, node := range vals {
-		user := User{}
-		node.Unmarshal(&user)
-		if !user.Admin {
-			err = usersRef.Child(node.Key()).Delete(dab.ctx)
+	return usersRef.Transaction(dab.ctx, db.UpdateFn(func(node db.TransactionNode) (interface{}, error) {
+		oldUsers := make(map[string]User, 0)
+		err := node.Unmarshal(&oldUsers)
+		if err != nil {
+			return nil, err
 		}
-	}
-	for _, user := range users {
-		userRef := usersRef.Child(dbCodeEmail(user.Email))
 
-		oldUser := User{}
-		userRef.Get(dab.ctx, &oldUser)
-		user.Admin = oldUser.Admin
+		for codedEmail, oldUser := range oldUsers {
+			if !oldUser.Admin {
+				delete(oldUsers, codedEmail)
+			}
+		}
 
-		err = userRef.Set(dab.ctx, user)
-	}
-	return err
+		for _, user := range users {
+			if len(user.Email) == 0 {
+				continue
+			}
+
+			oldUser := oldUsers[dbCodeEmail(user.Email)]
+			user.Admin = oldUser.Admin
+			oldUsers[dbCodeEmail(user.Email)] = user
+			log.Println(dbCodeEmail(user.Email))
+		}
+
+		return oldUsers, nil
+	}))
 }
 
 func (dab *Database) Flagged() (map[[2]string]*Entry, error) {
