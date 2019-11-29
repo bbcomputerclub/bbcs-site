@@ -164,7 +164,6 @@ func (dab *Database) SetStudents(users []User) error {
 			oldUser := oldUsers[dbCodeEmail(user.Email)]
 			user.Admin = oldUser.Admin
 			oldUsers[dbCodeEmail(user.Email)] = user
-			log.Println(dbCodeEmail(user.Email))
 		}
 
 		return oldUsers, nil
