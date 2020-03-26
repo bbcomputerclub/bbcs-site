@@ -566,7 +566,9 @@ func main() {
 		if studentInfo.Grade != 0 {
 			for key, entry := range entries {
 				grade := studentInfo.GradeAt(entry.Date)
-				if keys[grade] == nil { keys[grade] = make(map[string]bool) }
+				if keys[grade] == nil {
+					keys[grade] = make(map[string]bool)
+				}
 				keys[grade][key] = true
 			}
 
@@ -580,7 +582,7 @@ func main() {
 					// Find similar entries and remove them from the original keylist
 					// and add them to the group
 					for key2, _ := range keylist {
-						if strings.EqualFold(entries[key].Name, entries[key2].Name) {
+						if strings.EqualFold(strings.Trim(entries[key].Name, " \t\n"), strings.Trim(entries[key2].Name, " \t\n")) {
 							delete(keylist, key2)
 							group = append(group, key2)
 						}
@@ -620,8 +622,8 @@ func main() {
 			"Student": studentInfo,
 			"Entries": entries,
 
-			"Grades":  grades,
-			"Keys":    keysGrouped,
+			"Grades": grades,
+			"Keys":   keysGrouped,
 			"Totals": totalsGrouped,
 		}
 	}))
