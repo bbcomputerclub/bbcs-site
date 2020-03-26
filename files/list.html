@@ -24,9 +24,10 @@ h3 {
 
 		{{define "LIST" -}}
 			{{- $global := .Global}}
-			{{- range $key := .Keys}}
-				{{- $entry := (index $global.Entries $key)}}
-				{{- if $entry}}
+			{{- range $group := .Keys}}
+				{{- if eq 1 (len $group)}}
+					{{- $key := (index $group 0)}}
+					{{- $entry := (index $global.Entries $key)}}
 					<li><a href="/{{$global.Student.Email}}/{{$key}}">
 						{{$entry.Name}}
 						<div style="float:right">
@@ -34,6 +35,28 @@ h3 {
 						<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
 						</div>
 					</a></li>
+				{{else -}}
+					{{$firstKey := (index $group 0) -}}
+					{{$firstEntry := (index $global.Entries $firstKey) -}}
+					<li class="group">
+						<label for="ch-{{$firstKey}}">{{$firstEntry.Name}}
+						<div style="float:right">
+							<span style="min-width:32px;display:inline-block;text-align:right;">{{index $global.Totals $firstKey}}</span>
+						</div></label>
+						<input type="checkbox" id="ch-{{$firstKey}}">
+						<ul>
+						{{range $key := $group -}}
+							{{$entry := (index $global.Entries $key) -}}
+							<li><a href="/{{$global.Student.Email}}/{{$key}}">
+								{{$entry.Name}}
+								<div style="float:right">
+								<span style="margin-right:48px">{{$entry.Date.Format "Jan 2, 2006"}}</span>
+								<span style="min-width:32px;display:inline-block;text-align:right;">{{$entry.Hours}}</span>
+								</div>
+							</a></li>
+						{{end -}}
+						</ul>
+					</li>
 				{{end -}}
 			{{end -}}
 		{{end}}

@@ -72,18 +72,30 @@ body {
 	.list.linked li {
 		padding: 0;
 	}
-	.list.linked li a {
+	.list.linked li a, .list.linked li.group label {
 		text-decoration: none;
 		padding: 8px 72px;		
 		display: block;
 		color: inherit;
 		outline: 0;
+		font-size: 16px;
+		font-weight: normal;
 	}
-	.list.linked li a:hover, .list.linked li a:focus {
+	.list.linked li a:hover, .list.linked li a:focus, .list.linked li.group label:hover, .list.linked li.group label:focus {
 		background: rgba(0,0,0,0.1);
 	}
-	.list.linked li a:active {
+	.list.linked li a:active, .list.linked li.group label:active {
 		background: rgba(0,0,0,0.2);
+	}
+	.list.linked .group ul {
+		padding: 0;
+		margin: 0;
+		display: none;
+	}
+	.list.linked .group input { display: none; }
+	.list.linked .group input:checked + ul { display: block; }
+	.list.linked li.group ul li a {
+		padding-left: 108px;
 	}
 	.list:empty::after {
 		display: block;

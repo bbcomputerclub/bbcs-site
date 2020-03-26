@@ -12,7 +12,6 @@ import (
 	"firebase.google.com/go/db"
 	"fmt"
 	"google.golang.org/api/option"
-	"log"
 	"path"
 	"strings"
 )

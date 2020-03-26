@@ -558,18 +558,46 @@ func main() {
 			return 404, "", nil
 		}
 
-		var keys = make(map[uint][]string)
+		var keys = make(map[uint]map[string]bool)
+		var keysGrouped = make(map[uint][][]string)
+		var totalsGrouped = make(map[string]uint)
 		var grades []uint
 
 		if studentInfo.Grade != 0 {
 			for key, entry := range entries {
 				grade := studentInfo.GradeAt(entry.Date)
-				keys[grade] = append(keys[grade], key)
+				if keys[grade] == nil { keys[grade] = make(map[string]bool) }
+				keys[grade][key] = true
 			}
 
 			for grade, keylist := range keys {
 				grades = append(grades, grade)
-				entries.SortKeys(keylist)
+
+				for key, _ := range keylist {
+					// For each key
+					group := []string{key}
+					delete(keylist, key)
+					// Find similar entries and remove them from the original keylist
+					// and add them to the group
+					for key2, _ := range keylist {
+						if strings.EqualFold(entries[key].Name, entries[key2].Name) {
+							delete(keylist, key2)
+							group = append(group, key2)
+						}
+					}
+
+					sort.Slice(group, func(i, j int) bool {
+						return entries[group[i]].Date.After(entries[group[j]].Date)
+					})
+
+					total := uint(0)
+					for _, key := range group {
+						total += entries[key].Hours
+					}
+					totalsGrouped[group[0]] = total
+
+					keysGrouped[grade] = append(keysGrouped[grade], group)
+				}
 			}
 
 			sort.Slice(grades, func(i, j int) bool {
@@ -577,16 +605,24 @@ func main() {
 			})
 		} else {
 			for key, _ := range entries {
-				keys[0] = append(keys[0], key)
+				keysGrouped[0] = append(keysGrouped[0], []string{key})
 			}
+		}
+
+		for _, groups := range keysGrouped {
+			sort.Slice(groups, func(i, j int) bool {
+				return entries[groups[i][0]].Date.After(entries[groups[j][0]].Date)
+			})
 		}
 
 		return 200, "files/list.html", map[string]interface{}{
 			"User":    user,
 			"Student": studentInfo,
 			"Entries": entries,
-			"Keys":    keys,
+
 			"Grades":  grades,
+			"Keys":    keysGrouped,
+			"Totals": totalsGrouped,
 		}
 	}))
 
