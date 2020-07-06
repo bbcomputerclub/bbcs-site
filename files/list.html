@@ -81,7 +81,7 @@ h3 {
 			{{- $keylist := index $global.Keys 0}}
 			{{- template "LIST" dict "Keys" $keylist "Global" $global}}
 		{{- end -}}
+			<a id="add" href="/{{.Student.Email}}/add" class="button strong corner">Add</a>		
 		</ul>
-		<a id="add" href="/{{.Student.Email}}/add" class="button strong corner">Add</a>		
    </body>
 </html>

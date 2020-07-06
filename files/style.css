@@ -65,7 +65,7 @@ span {
 
 .list {
 	padding: 10px 0;
-	margin: 0;
+	margin: 0 0 72px 0;
 }
 	.list > li {
 		list-style-type: none;
@@ -123,7 +123,6 @@ h1 {
 
 #pop {
     padding: 20px;
-    margin: 8vw 0;
     border-radius: 10px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15), 0 6px 20px 0 rgba(0, 0, 0, 0.14);
 }
@@ -238,7 +237,7 @@ h1 {
 	height: 36px;
     font-size: 24px;
 	line-height: 36px;
-    position: absolute;
+    position: fixed;
     left: 50%;
     bottom: 10px;
     transform: translateX(-50%); 
