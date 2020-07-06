@@ -66,10 +66,6 @@ h3 {
 		{{else}}
 			{{template "toolbar.html" dict "Back" "" "Title" (printf "%s's hours" .Student.Name) "User" .User}}
 		{{end}}
-		<main style="color:#fff;background:#aaa"><b>Total</b> 
-			<span style="float:right" {{- if lt $total .Student.Required}} title="{{.Student.Required}} hours recommended by the end of {{fmtordinal .Student.GradeNow}} grade">
-			<span aria-label="Warning" class="material-icons" style="vertical-align:top;margin-right:4px;cursor:default;">&#xe002;</span{{end}}>
-			<b>{{$total}}</b></span></main>
 		<ul class="list linked" id="hours">		
 		{{- if ne .Student.Grade 0}}
 			{{- range $grade := .Grades}}
