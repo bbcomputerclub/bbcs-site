@@ -58,35 +58,34 @@ input:disabled, textarea:disabled {
 			<main>
 				<input name="entry" type="hidden" value="{{.Key}}">
 				<input name="user" type="hidden" value="{{.Student.Email}}">
-				<div id="pop">
-					{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View")}}
 
-					{{if ne .Action "Add"}}
-					<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small>
-						<div style="float:right"><label>Editable Until:</label><small> {{(.Entry.Date.AddDate 0 0 31).Format "Jan 2, 2006"}}</small></div>
-					</div>
-					{{end}}
+				{{template "fields.html" dict "Entry" .Entry "Admin" .User.Admin "Disabled" (eq .Action "View")}}
 
-					<!-- Buttons -->
-					{{if ne .Action "View"}}
-						<a class="button" style="margin-top:8px" href="/{{.Student.Email}}">Cancel</a>
-						<span style="float:right;margin-top:8px">
-							{{if eq .Action "Edit" -}}
-								{{if .User.Admin -}}
-									{{if .Entry.Flagged}}
-										<button formaction="/do/unflag" class="button" type="submit" style="margin-left:8px">Not Suspicious</button>
-									{{- end}}
-									<button formaction="/do/delete" class="button" type="submit" style="margin-left:8px" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
-								{{end}}
-								<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-left:8px">Duplicate</a>
-							{{end}}
-							<button type="submit" class="button strong" style="margin-left:8px">Save</button>
-						</span>
-					{{else}}
-						<a class="button" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
-						<a class="button strong" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-top:8px;float:right">Duplicate</a>
-					{{end}}
+				{{if ne .Action "Add"}}
+				<div style="margin-top:8px" id="lastmodified"><span class="label">Last Modified:</span><small> {{.Entry.LastModified.Format "Jan 2, 2006"}}</small>
+					<div style="float:right"><label>Editable Until:</label><small> {{(.Entry.Date.AddDate 0 0 31).Format "Jan 2, 2006"}}</small></div>
 				</div>
+				{{end}}
+
+				<!-- Buttons -->
+				{{if ne .Action "View"}}
+					<a class="button" style="margin-top:8px" href="/{{.Student.Email}}">Cancel</a>
+					<span style="float:right;margin-top:8px">
+						{{if eq .Action "Edit" -}}
+							{{if .User.Admin -}}
+								{{if .Entry.Flagged}}
+									<button formaction="/do/unflag" class="button" type="submit" style="margin-left:8px">Not Suspicious</button>
+								{{- end}}
+								<button formaction="/do/delete" class="button" type="submit" style="margin-left:8px" onclick="return window.confirm('Are you sure you want to delete \'' + document.querySelector('[name=name]').value + '\'?')">Delete</button>
+							{{end}}
+							<a class="button" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-left:8px">Duplicate</a>
+						{{end}}
+						<button type="submit" class="button strong" style="margin-left:8px">Save</button>
+					</span>
+				{{else}}
+					<a class="button" href="/{{.Student.Email}}" style="margin-top:8px">Back</a>
+					<a class="button strong" href="/{{.Student.Email}}/{{.Key}}/duplicate" style="margin-top:8px;float:right">Duplicate</a>
+				{{end}}
 			</main>
 			{{if ne .Action "View"}}
 			</form>

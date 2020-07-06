@@ -9,12 +9,13 @@ body {
 	padding-right: 72px; }
 
 .title {
-	padding: 24px 72px;
+	padding: 25px 72px;
 	background: #26428b;
 	color: #FFF;
 	display: flex;
 	align-items: center;
 	position:fixed;top:0;left:0;right:0;
+    box-shadow: 0 10px 8px 0 rgba(0, 0, 0, 0.15), 0 6px 20px 0 rgba(0, 0, 0, 0.14);
 	white-space: nowrap;
 }
 	.title > a, .title > span {
@@ -46,7 +47,7 @@ body {
 	.title .icon {
 		position:absolute;
 		left: 24px;
-		top: 24px;
+		top: 16px;
 		margin: 0;
 
 		text-decoration: none;
@@ -59,12 +60,8 @@ body {
 	}
 }
 
-span {
-    font-size: 18px;
-}
-
 .list {
-	padding: 10px 0;
+	padding: 0;
 	margin: 0;
 }
 	.list > li {
@@ -108,24 +105,12 @@ span {
 	}
 
 main {
-	padding: 48px 72px;
-}
-
-#total-hours {
-	padding: 32px 72px 16px;
-	box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.15), 0 6px 20px 0 rgba(0, 0, 0, 0.14);
+	padding: 16px 72px;
 }
 
 h1 {
 	font-size: 24px;
 	font-weight: bold;
-}
-
-#pop {
-    padding: 20px;
-    margin: 8vw 0;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.15), 0 6px 20px 0 rgba(0, 0, 0, 0.14);
 }
 
 .card {
@@ -206,12 +191,10 @@ h1 {
 	outline: 0;
 	cursor: pointer;
 	font-family: inherit;
-	font-size: 18px;
+	font-size: 14px;
 	text-align: center;
 	text-decoration: none;
-    line-height: 24px;
-	height: 24px;
-    border-radius: 5px;
+	border-radius: 0;
 }
 	.button:focus {
 		border: 4px solid #3761cc;
@@ -225,23 +208,19 @@ h1 {
 		border-color: #37ACCC;
 	}
 .button.strong {
-	background: #e91e63;
-    height: auto;
-}
+	background: #e91e63; }
 	.button.strong:focus {
-		border-color: #f06292; 
-}
+		border-color: #f06292; }
 
 .corner {
     width: 90%;
-	border-radius: 10px;
-	height: 36px;
-    font-size: 24px;
-	line-height: 36px;
-    position: absolute;
+	position: absolute;
     left: 50%;
-    bottom: 10px;
-    transform: translateX(-50%); 
+    border-radius: 10px;
+    transform: translateX(-50%);
+    line-height: 24px;
+    height: 24px;
+	bottom: 32px;
 }
 
 .flex {

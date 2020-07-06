@@ -3,7 +3,6 @@
     Disabled bool
     Entry *Entry
 -->
-
 <div>
     <label for="name">Name</label>
     <input id="name" name="name" type="text" placeholder="Junior Jellies" class="textfield" value="{{.Entry.Name}}" required {{if .Disabled}}disabled{{end}}>
@@ -34,5 +33,6 @@
         <input id="contactphone" name="contactphone" class="textfield" type="tel" placeholder="+1 914-937-3600" {{if ne .Entry.ContactPhone 0}}value="+{{.Entry.ContactPhone}}"{{end}} pattern="[0-9\-\+ ]+" {{if .Disabled}}disabled{{end}} />
     </div>
 </div>
+
 <label for="description">Description</label>
 <textarea class="textfield" placeholder="Mentoring future Jellyfish" id="description" name="description" {{if .Disabled}}disabled{{end}}>{{.Entry.Description}}</textarea>
